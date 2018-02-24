@@ -1,0 +1,22 @@
+<body>
+	<div style="max-width: 900px; text-align: justify; margin: auto; padding-top: 20px; padding-bottom: 20px;">
+		{% for e in entries %}
+			<div style="margin-bottom: 50px; {% if e.in_future %}color:gray;{% endif %}">
+				<h3 style="color:orange;">{{ e.day }}</h3>
+				{% if e.has_header %}
+					<h2>{{ e.header }}</h2>
+				{% endif %}
+				<p>{{ e.content|safe }}</p>
+				{% if e.has_to_do %}
+					<p><b>To Do: </b>{{ e.to_do }}</p>
+				{% endif %}
+				<p>
+					{% if e.has_tags %}
+						<b>tags:</b> {{ e.tags }}
+					{% endif %}
+					<b>place:</b> {{ e.place }}
+				</p>
+			</div>
+		{% endfor %}
+	</div>
+</body>

@@ -1,0 +1,28 @@
+<head>
+	{% load static %}
+	{% static 'styles.css' %}
+	<link rel="stylesheet" type="text/css" href="{% static 'styles.css' %}" />
+	<link rel="stylesheet" type="text/css" href="{% static 'styles.css' %}" />
+</head>
+<body>
+	<p>You are looking at <b>{{ date }}</b></p>
+	<p>Move by day <a href={{prev_day_url}}><-</a> <a href={{next_day_url}}>-></a></p>
+	<p>Move to previous or next valid entry (one with hs pics) <a href={{existing_prev_day_url}}><-</a> <a href={{existing_next_day_url}}>-></a></p>
+	<div>
+		{% if has_entry %}
+			<h3>Entry:</h3>
+			{{ entry|safe }}</br>
+			{% if has_tags %}
+				<b>tags:</b> {{ tags }}
+			{% endif %}
+		{% endif %}
+		{% if has_hs_pics %}
+			<h3>HS pics from that day:</h3>
+			{% for pic in hs_pics %}
+				{{ pic }}<br><!--
+				<img src="{{ pic }}"></img>-->
+			{% endfor %}
+		{% endif %}
+		{{ pic_tuples }}
+	</div>
+</body>
