@@ -26,13 +26,14 @@ class Entry(models.Model):
 			if not self.complete:
 				apendix += ", unfinished"
 
-			return "{weekday}, {date}, {place}{apendix}".format(
+			return "{weekday}, {date}, {place}{apendix} ({len_in_char} chars)".format(
 				weekday=(
 					"Pondělí", "Úterý", "Středa", "Čtvrtek", "Pátek", "Sobota", "Neděle"
 				)[self.day.weekday()],
 				date=str(self.day),
 				place=self.place,
 				apendix=apendix,
+				len_in_char=len(self.content),
 			)
 
 	day = models.DateField()
