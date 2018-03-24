@@ -123,7 +123,7 @@ def get_all_entries(request):
 		if e.to_do:
 			to_add["has_to_do"] = True
 			to_add["to_do"] = e.to_do.replace("\n", "; ")
-		to_add["content"] = e.content.replace("\n", "</br>")
+		to_add["content"] = e.content
 		tags = e.tags.all().order_by("tag")
 		if len(tags) > 0:
 			to_add["has_tags"] = True
