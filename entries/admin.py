@@ -11,7 +11,7 @@ class EntryAdmin(admin.ModelAdmin):
 	model = Entry
 	ordering = ('-day',)
 	formfield_overrides = {
-		models.TextField : {"widget": Textarea(attrs={"rows": 20, "cols": 120})},
+		models.TextField : {"widget": Textarea(attrs={"rows": 1, "cols": 120})},
 		models.ManyToManyField : {"widget": ColumnCheckboxSelectMultiple(columns=3)},
 #		ChoiceField : {"widget": RadioSelect},
 	}

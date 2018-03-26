@@ -6,7 +6,18 @@
 				{% if e.has_header %}
 					<h2>{{ e.header }}</h2>
 				{% endif %}
-				<p>{{ e.content|safe|linebreaks }}</p>
+				<p>
+					{{ e.content|safe|linebreaks }}
+					{% if e.content_day %}
+						<h3><i>Day:</i></h3>{{ e.content_day|safe|linebreaks }}
+					{% endif %}
+					{% if e.content_thought %}
+						<h3><i>Thoughts:</i></h3>{{ e.content_thought|safe|linebreaks }}
+					{% endif %}
+					{% if e.content_idea %}
+						<h3><i>Ideas:</i></h3>{{ e.content_idea|safe|linebreaks }}
+					{% endif %}
+				</p>
 				{% if e.has_to_do %}
 					<p><b>To Do: </b>{{ e.to_do }}</p>
 				{% endif %}

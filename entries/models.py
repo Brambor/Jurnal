@@ -33,7 +33,7 @@ class Entry(models.Model):
 				date=str(self.day),
 				place=self.place,
 				apendix=apendix,
-				len_in_char=len(self.content),
+				len_in_char=len(self.content)+len(self.content_day)+len(self.content_thought)+len(self.content_idea),
 			)
 
 	day = models.DateField()
@@ -42,6 +42,15 @@ class Entry(models.Model):
 		blank=True,
 	)
 	content = models.TextField(
+		blank=True,
+	)
+	content_day = models.TextField(
+		blank=True,
+	)
+	content_thought = models.TextField(
+		blank=True,
+	)
+	content_idea = models.TextField(
 		blank=True,
 	)
 	to_do = models.CharField(

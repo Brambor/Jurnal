@@ -124,6 +124,9 @@ def get_all_entries(request):
 			to_add["has_to_do"] = True
 			to_add["to_do"] = e.to_do.replace("\n", "; ")
 		to_add["content"] = e.content
+		to_add["content_day"] = e.content_day
+		to_add["content_thought"] = e.content_thought
+		to_add["content_idea"] = e.content_idea
 		tags = e.tags.all().order_by("tag")
 		if len(tags) > 0:
 			to_add["has_tags"] = True
