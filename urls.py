@@ -19,11 +19,12 @@ from django.views.generic import RedirectView
 
 import settings
 
-from entries.views import greetings, get_all_entries
+from entries.views import GraphView, greetings, get_all_entries
 
 urlpatterns = [
 	url(r'^admin/', admin.site.urls),
     url(r'^$', get_all_entries),
+    url(r'^graph$', GraphView.as_view()),
 	url(r'^(?P<year>[0-9]+)/(?P<month>[0-9]+)/(?P<day>[0-9]+)/$', greetings, name='jurnal'),
 	url(r'^', greetings),
 ]

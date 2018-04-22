@@ -1,8 +1,10 @@
 
 from django.http import HttpResponse
+from django.views.generic.base import TemplateView
 from django.template import loader
 
 from .models import Entry
+from .utils import generate_graph
 
 import datetime
 import os
@@ -139,3 +141,43 @@ def get_all_entries(request):
 		context["entries"].append(to_add)
 
 	return HttpResponse(template.render(context, request))
+
+class GraphView(TemplateView):
+
+	template_name = "graph.html"
+
+	def get_context_data(self, **kwargs):
+		context = super(GraphView, self).get_context_data(**kwargs)
+
+		entries = Entry.objects.order_by('-day')
+
+		x = [e.day for e in entries]
+
+		# Characters per day
+
+		y_chars_data = {
+			'content': [len(e.content) for e in entries],
+			'day': [len(e.content_day) for e in entries],
+			'thought': [len(e.content_thought) for e in entries],
+			'idea': [len(e.content_idea) for e in entries],
+		}
+
+		context['graph_chars'] = generate_graph(x, y_chars_data, 'Ratios')
+
+		# Day ratio
+
+		y_sum = []
+		for i in range(len(y_chars_data['content'])):
+			y_sum.append(sum(y_chars_data[key][i] for key in y_chars_data))
+
+		y_ratio_data = {key: [] for key in y_chars_data}
+		for key in y_chars_data:
+			for i in range(len(y_chars_data[key])):
+				if y_sum[i] != 0:
+					y_ratio_data[key].append(y_chars_data[key][i]/y_sum[i]*100)
+				else:
+					y_ratio_data[key].append(0)
+
+		context['graph_ratio'] = generate_graph(x, y_ratio_data, 'Ratios')
+
+		return context
