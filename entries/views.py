@@ -162,7 +162,7 @@ class GraphView(TemplateView):
 			'idea': [len(e.content_idea) for e in entries],
 		}
 
-		context['graph_chars'] = generate_graph(x, y_chars_data, 'Ratios')
+		context['graph_chars'] = generate_graph(x, y_chars_data, 'Characters')
 
 		# Day ratio
 
@@ -179,5 +179,34 @@ class GraphView(TemplateView):
 					y_ratio_data[key].append(0)
 
 		context['graph_ratio'] = generate_graph(x, y_ratio_data, 'Ratios')
+
+		# Average chars per day
+
+		y_average_data = {'average_of_sum': []}
+		total_chars = 0
+		for i, chars in enumerate(y_sum[::-1]): #  NO idea why it has to be reversed...
+			total_chars += chars
+			y_average_data['average_of_sum'].append(total_chars//(i+1))
+
+		y_average_data['average_of_sum'] = y_average_data['average_of_sum'][::-1] #  then reverse back
+
+		context['graph_average'] = generate_graph(x, y_average_data, 'Average')
+
+		# Average chars last seven days
+
+		y_average_7_days_data = {'average_of_sum': []}
+		total_chars = 0
+		for i, chars in enumerate(y_sum[::-1][:7]): #  NO idea why it has to be reversed...
+			total_chars += chars
+			y_average_7_days_data['average_of_sum'].append(total_chars//(i+1))
+
+		y_sum_reversed = y_sum[::-1]
+		for i, chars in enumerate(y_sum[::-1][7:]): #  NO idea why it has to be reversed...
+			total_chars += chars - y_sum_reversed[i]
+			y_average_7_days_data['average_of_sum'].append(total_chars//7)
+
+		y_average_7_days_data['average_of_sum'] = y_average_7_days_data['average_of_sum'][::-1] #  then reverse back
+
+		context['graph_average_7_days'] = generate_graph(x, y_average_7_days_data, 'Average of last 7 days')
 
 		return context
