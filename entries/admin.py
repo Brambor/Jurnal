@@ -4,7 +4,7 @@ from django.forms import Textarea, RadioSelect, ChoiceField
 from django.db import models
 
 from .forms import ColumnCheckboxSelectMultiple
-from .models import Entry, Tag
+from .models import Done, Entry, Tag
 
 
 class EntryAdmin(admin.ModelAdmin):
@@ -22,5 +22,10 @@ class TagAdmin(admin.ModelAdmin):
 	model = Tag
 
 
+class DoneAdmin(admin.ModelAdmin):
+	model = Done
+
+
 admin.site.register(Tag, TagAdmin)
+admin.site.register(Done, DoneAdmin)
 admin.site.register(Entry, EntryAdmin)

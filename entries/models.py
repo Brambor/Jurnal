@@ -12,6 +12,14 @@ class Tag(models.Model):
 	)
 
 
+class Done(models.Model):
+	def __str__(self):
+		return self.done
+	done = models.CharField(
+		max_length=255,
+	)
+
+
 class Entry(models.Model):
 	class Meta:
 		verbose_name_plural = "Entries"
@@ -55,6 +63,11 @@ class Entry(models.Model):
 	)
 	to_do = models.CharField(
 		max_length=255,
+		blank=True,
+	)
+	done = models.ManyToManyField(
+		Done,
+		related_name='entries',
 		blank=True,
 	)
 	tags = models.ManyToManyField(

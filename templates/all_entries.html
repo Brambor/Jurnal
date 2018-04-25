@@ -21,6 +21,9 @@
 				{% if e.has_to_do %}
 					<p><b>To Do: </b>{{ e.to_do }}</p>
 				{% endif %}
+				{% if e.has_done %}
+					<p><b>Done: </b>{{ e.done }}</p>
+				{% endif %}
 				<p>
 					{% if e.has_tags %}
 						<b>tags:</b> {{ e.tags }}

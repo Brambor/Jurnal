@@ -129,14 +129,16 @@ def get_all_entries(request):
 		to_add["content_day"] = e.content_day
 		to_add["content_thought"] = e.content_thought
 		to_add["content_idea"] = e.content_idea
-		tags = e.tags.all().order_by("tag")
+		tags = e.tags.order_by("tag")
 		if len(tags) > 0:
 			to_add["has_tags"] = True
 			to_add["tags"] = ", ".join(str(t) for t in tags)
-		else:
-			to_add["has_tags"] = False
 		if e.day > datetime.datetime.date(datetime.datetime.today()):
 			to_add["in_future"] = True
+		done = e.done.order_by('done')
+		if len(done) > 0:
+			to_add['has_done'] = True
+			to_add['done'] = ', '.join(str(d) for d in done)
 		to_add["place"] = e.place
 		context["entries"].append(to_add)
 
