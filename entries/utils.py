@@ -2,7 +2,7 @@ from plotly.offline import plot
 import plotly.graph_objs as go
 
 
-def generate_graph(x, y_data, title):
+def generate_graph(x, y_data, title, layout_edit={}):
 	data = [
 		go.Bar(
 			x=x,
@@ -14,6 +14,7 @@ def generate_graph(x, y_data, title):
 	layout = go.Layout(
 		title=title,
 		barmode='stack',
+		**layout_edit,
 	)
 
 	fig = go.Figure(

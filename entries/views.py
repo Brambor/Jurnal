@@ -164,7 +164,7 @@ class GraphView(TemplateView):
 			'idea': [len(e.content_idea) for e in entries],
 		}
 
-		context['graph_chars'] = generate_graph(x, y_chars_data, 'Characters')
+		context['graph_chars'] = generate_graph(x, y_chars_data, 'Characters', {'width': 1887}) # to prevent horizontal scalebar
 
 		# Day ratio
 
@@ -176,38 +176,33 @@ class GraphView(TemplateView):
 		for key in y_chars_data:
 			for i in range(len(y_chars_data[key])):
 				if y_sum[i] != 0:
-					y_ratio_data[key].append(y_chars_data[key][i]/y_sum[i]*100)
+					y_ratio_data[key].append(y_chars_data[key][i]*100/y_sum[i])
 				else:
 					y_ratio_data[key].append(0)
 
-		context['graph_ratio'] = generate_graph(x, y_ratio_data, 'Ratios')
+		context['graph_ratio'] = generate_graph(x, y_ratio_data, 'Ratios', {'height':311}) #933/3
 
 		# Average chars per day
 
-		y_average_data = {'average_of_sum': []}
-		total_chars = 0
-		for i, chars in enumerate(y_sum):
-			total_chars += chars
-			y_average_data['average_of_sum'].append(total_chars//(i+1))
+		y_average_data = {key: [] for key in y_chars_data}
+		total_chars = {key: 0 for key in y_chars_data}
+		for key in y_chars_data:
+			for i, chars in enumerate(y_chars_data[key]):
+				total_chars[key] += chars
+				y_average_data[key].append(total_chars[key]//(i+1))
 
-		y_average_data['average_of_sum'] = y_average_data['average_of_sum']
-
-		context['graph_average'] = generate_graph(x, y_average_data, 'Average')
+		context['graph_average'] = generate_graph(x, y_average_data, 'Average', {'height':311})
 
 		# Average chars last seven days
 
-		y_average_7_days_data = {'average_of_sum': []}
-		total_chars = 0
-		for i, chars in enumerate(y_sum[:7]):
-			total_chars += chars
-			y_average_7_days_data['average_of_sum'].append(total_chars//(i+1))
+		y_average_7_days_data = {key: y_average_data[key][:7] for key in y_chars_data}
+		total_chars = {key: sum(y_chars_data[key][:7]) for key in y_chars_data}
 
-		for i, chars in enumerate(y_sum[7:]):
-			total_chars += chars - y_sum[i]
-			y_average_7_days_data['average_of_sum'].append(total_chars//7)
+		for key in y_chars_data:
+			for i, chars in enumerate(y_chars_data[key][7:]):
+				total_chars[key] += chars - y_chars_data[key][i]
+				y_average_7_days_data[key].append(total_chars[key]//7)
 
-		y_average_7_days_data['average_of_sum'] = y_average_7_days_data['average_of_sum']
-
-		context['graph_average_7_days'] = generate_graph(x, y_average_7_days_data, 'Average of last 7 days')
+		context['graph_average_7_days'] = generate_graph(x, y_average_7_days_data, 'Average of last 7 days', {'height':311})
 
 		return context
