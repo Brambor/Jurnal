@@ -151,7 +151,7 @@ class GraphView(TemplateView):
 	def get_context_data(self, **kwargs):
 		context = super(GraphView, self).get_context_data(**kwargs)
 
-		entries = Entry.objects.order_by('-day')
+		entries = Entry.objects.order_by('day')
 
 		x = [e.day for e in entries]
 
@@ -186,11 +186,11 @@ class GraphView(TemplateView):
 
 		y_average_data = {'average_of_sum': []}
 		total_chars = 0
-		for i, chars in enumerate(y_sum[::-1]): #  NO idea why it has to be reversed...
+		for i, chars in enumerate(y_sum):
 			total_chars += chars
 			y_average_data['average_of_sum'].append(total_chars//(i+1))
 
-		y_average_data['average_of_sum'] = y_average_data['average_of_sum'][::-1] #  then reverse back
+		y_average_data['average_of_sum'] = y_average_data['average_of_sum']
 
 		context['graph_average'] = generate_graph(x, y_average_data, 'Average')
 
@@ -198,16 +198,15 @@ class GraphView(TemplateView):
 
 		y_average_7_days_data = {'average_of_sum': []}
 		total_chars = 0
-		for i, chars in enumerate(y_sum[::-1][:7]): #  NO idea why it has to be reversed...
+		for i, chars in enumerate(y_sum[:7]):
 			total_chars += chars
 			y_average_7_days_data['average_of_sum'].append(total_chars//(i+1))
 
-		y_sum_reversed = y_sum[::-1]
-		for i, chars in enumerate(y_sum[::-1][7:]): #  NO idea why it has to be reversed...
-			total_chars += chars - y_sum_reversed[i]
+		for i, chars in enumerate(y_sum[7:]):
+			total_chars += chars - y_sum[i]
 			y_average_7_days_data['average_of_sum'].append(total_chars//7)
 
-		y_average_7_days_data['average_of_sum'] = y_average_7_days_data['average_of_sum'][::-1] #  then reverse back
+		y_average_7_days_data['average_of_sum'] = y_average_7_days_data['average_of_sum']
 
 		context['graph_average_7_days'] = generate_graph(x, y_average_7_days_data, 'Average of last 7 days')
 
