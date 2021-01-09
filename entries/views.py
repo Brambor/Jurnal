@@ -4,7 +4,7 @@ from django.views.generic.base import TemplateView
 from django.template import loader
 
 from .models import Entry
-from .utils import generate_graph
+from .utils import generate_graph, weekday
 
 import datetime
 import os
@@ -66,9 +66,7 @@ def greetings(request, **kwargs):
 
 	context = {
 		"date": "{weekday}, {date}".format(
-			weekday=(
-				"Pondělí", "Úterý", "Středa", "Čtvrtek", "Pátek", "Sobota", "Neděle"
-			)[requested_date.weekday()],
+			weekday=weekday(requested_date.weekday()),
 			date=requested_date,
 		),
 		"existing_prev_day_url":
@@ -114,9 +112,7 @@ def get_all_entries(request):
 	for e in entries:
 		to_add = {}
 		to_add["day"] = "{weekday}, {date}".format(
-			weekday=str((
-				"Pondělí", "Úterý", "Středa", "Čtvrtek", "Pátek", "Sobota", "Neděle"
-			)[e.day.weekday()]),
+			weekday=e.weekday(),
 			date=str(e.day),
 		)
 		if e.header:

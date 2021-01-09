@@ -38,11 +38,14 @@ class Entry(models.Model):
 			apendix += ", unfinished"
 
 		return (
-			f"{prolog}{weekday(self.day.weekday())}, {self.day}, "
-			f"{self.place}{apendix} ({self.get_len_in_char()} chars)")
+			f"{prolog}{self.weekday()}, {self.day}, {self.place}{apendix} "
+			f"({self.get_len_in_char()} chars)")
 
 	def get_len_in_char(self):
 		return len(self.content)+len(self.content_day)+len(self.content_thought)+len(self.content_idea)
+
+	def weekday(self):
+		return weekday(self.day.weekday())
 
 	day = models.DateField()
 	header = models.CharField(
