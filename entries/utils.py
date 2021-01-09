@@ -29,3 +29,8 @@ def generate_graph(x, y_data, title, layout_edit={}):
 	)
 
 	return div
+
+def weekday(n):
+	"Given int n, 0 <= n <= 6,"
+	"return Czech name of n'th weekday"
+	return ("Pondělí", "Úterý", "Středa", "Čtvrtek", "Pátek", "Sobota", "Neděle")[n]

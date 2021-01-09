@@ -1,7 +1,8 @@
+from datetime import datetime
 
 from django.db import models
 
-import datetime
+from .utils import weekday
 
 
 class Tag(models.Model):
@@ -25,24 +26,23 @@ class Entry(models.Model):
 		verbose_name_plural = "Entries"
 
 	def __str__(self):
-		if self.day > datetime.datetime.date(datetime.datetime.today()):
-			return "Todo {date}".format(date=str(self.day))
+		if self.day > datetime.date(datetime.today()):
+			prolog = "Todo (date is in future) "
 		else:
-			apendix = ""
-			if self.header:
-				apendix += ", {}".format(self.header)
-			if not self.complete:
-				apendix += ", unfinished"
+			prolog = ""
 
-			return "{weekday}, {date}, {place}{apendix} ({len_in_char} chars)".format(
-				weekday=(
-					"Pondělí", "Úterý", "Středa", "Čtvrtek", "Pátek", "Sobota", "Neděle"
-				)[self.day.weekday()],
-				date=str(self.day),
-				place=self.place,
-				apendix=apendix,
-				len_in_char=len(self.content)+len(self.content_day)+len(self.content_thought)+len(self.content_idea),
-			)
+		apendix = ""
+		if self.header:
+			apendix += f", {self.header}"
+		if not self.complete:
+			apendix += ", unfinished"
+
+		return (
+			f"{prolog}{weekday(self.day.weekday())}, {self.day}, "
+			f"{self.place}{apendix} ({self.get_len_in_char()} chars)")
+
+	def get_len_in_char(self):
+		return len(self.content)+len(self.content_day)+len(self.content_thought)+len(self.content_idea)
 
 	day = models.DateField()
 	header = models.CharField(
