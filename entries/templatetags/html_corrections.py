@@ -1,6 +1,10 @@
+import re
 from bs4 import BeautifulSoup
+from datetime import datetime
 
 from django import template
+
+from ..models import Entry
 
 
 register = template.Library()
@@ -48,3 +52,37 @@ def squish_ul_linebreaks(value):
 			"".join(x.strip() if x.endswith(">") else f'{x.strip()}\n' for x in value[start:end].splitlines()))
 
 	return value
+
+
+def decorate_date(match):
+	"""
+	Find all dates in format YYYY-MM-DD in match and replace it by clickable
+	<a href="#...">...</a> date if there is an entry of that day.
+	Otherwise return date with warning saying format is incorect, or that
+	not exactly one entry with given day exists.
+
+	match is a re.Match
+	"""
+	y, m, d = (int(i) for i in match.group().split("-"))
+	try:
+		day = datetime(year=y, month=m, day=d)
+	except ValueError:
+		return f"<i>{match.group()} (incorect date format)</i>"
+	entries = Entry.objects.filter(day=day)
+	if not entries:
+		return f"<i>{match.group()} (no entry)</i>"
+	elif len(entries) > 1:
+		return f"<i>{match.group()} (huh, found {len(entries)} entries)</i>"
+	else:
+		e = entries.first()
+		return (f'<i><a href="#{e.day}">{e.weekday()}, {match.group()}, '
+			f'{e.header if e.header else "(no header)"}</a></i>')
+
+
+@register.filter
+def date_tag_a(value):
+	"""
+	Find all dates in format YYYY-MM-DD in value and replace it by clickable
+	<a href="#...">...</a> date.
+	"""
+	return re.sub("\d{4}-\d{2}-\d{2}", decorate_date, value)

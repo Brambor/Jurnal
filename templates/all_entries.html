@@ -4,23 +4,23 @@
 	<div style="max-width: 900px; text-align: justify; margin: auto; padding-top: 20px; padding-bottom: 20px;">
 		{% for e in entries %}
 			<div style="margin-bottom: 50px; {% if e.in_future %}color:gray;{% endif %}">
-				<h3 style="color:orange;">{{ e.day }}</h3>
+				<h3 style="color:orange;" id="{{ e.day }}">{{ e.weekday_date }}</h3>
 				{% if e.has_header %}
 					<h2>{{ e.header }}</h2>
 				{% endif %}
 				<p>
-					{{ e.content|squish_ul_linebreaks|safe|linebreaks }}
+					{{ e.content|date_tag_a|squish_ul_linebreaks|safe|linebreaks }}
 					{% if e.content_day %}
 						<h3><i>Day:</i></h3>
-						{{ e.content_day|squish_ul_linebreaks|safe|linebreaks }}
+						{{ e.content_day|date_tag_a|squish_ul_linebreaks|safe|linebreaks }}
 					{% endif %}
 					{% if e.content_thought %}
 						<h3><i>Thoughts:</i></h3>
-						{{ e.content_thought|squish_ul_linebreaks|safe|linebreaks }}
+						{{ e.content_thought|date_tag_a|squish_ul_linebreaks|safe|linebreaks }}
 					{% endif %}
 					{% if e.content_idea %}
 						<h3><i>Ideas:</i></h3>
-						{{ e.content_idea|squish_ul_linebreaks|safe|linebreaks }}
+						{{ e.content_idea|date_tag_a|squish_ul_linebreaks|safe|linebreaks }}
 					{% endif %}
 				</p>
 				{% if e.has_to_do %}

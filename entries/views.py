@@ -111,7 +111,8 @@ def get_all_entries(request):
 	entries = Entry.objects.order_by("-day")
 	for e in entries:
 		to_add = {}
-		to_add["day"] = "{weekday}, {date}".format(
+		to_add["day"] = str(e.day)
+		to_add["weekday_date"] = "{weekday}, {date}".format(
 			weekday=e.weekday(),
 			date=str(e.day),
 		)
