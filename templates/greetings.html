@@ -9,14 +9,14 @@
 	<p>Move by day <a href={{prev_day_url}}><-</a> <a href={{next_day_url}}>-></a></p>
 	<p>Move to previous or next valid entry (one with hs pics) <a href={{existing_prev_day_url}}><-</a> <a href={{existing_next_day_url}}>-></a></p>
 	<div>
-		{% if has_entry %}
+		{% if entry %}
 			<h3>Entry:</h3>
 			{{ entry|safe }}</br>
-			{% if has_tags %}
+			{% if tags %}
 				<b>tags:</b> {{ tags }}
 			{% endif %}
 		{% endif %}
-		{% if has_hs_pics %}
+		{% if hs_pics %}
 			<h3>HS pics from that day:</h3>
 			{% for pic in hs_pics %}
 				{{ pic }}<br><!--

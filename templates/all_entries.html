@@ -8,7 +8,7 @@
 				<a style="text-decoration: none;" href="#{{ e.day }}">
 					<h3 style="color:orange;" id="{{ e.day }}">{{ e.weekday_date }}</h3>
 				</a>
-				{% if e.has_header %}
+				{% if e.header %}
 					<h2>{{ e.header }}</h2>
 				{% endif %}
 				<p>
@@ -33,14 +33,14 @@
 						{% endfor %}
 					{% endif %}
 				</p>
-				{% if e.has_to_do %}
+				{% if e.to_do %}
 					<p><b>To Do: </b>{{ e.to_do }}</p>
 				{% endif %}
-				{% if e.has_done %}
+				{% if e.done %}
 					<p><b>Done: </b>{{ e.done }}</p>
 				{% endif %}
 				<p>
-					{% if e.has_tags %}
+					{% if e.tags %}
 						<b>tags:</b> {{ e.tags }}
 					{% endif %}
 					<b>place:</b> {{ e.place }}

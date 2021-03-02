@@ -82,23 +82,14 @@ def greetings(request, **kwargs):
 	}
 
 	if that_date[1]:
-		context["has_hs_pics"] = True
 		context["hs_pics"] = that_date[1]
-	else:
-		context["has_hs_pics"] = False
 
 	entries = Entry.objects.filter(day=requested_date)
 	if len(entries) > 0:
-		context["has_entry"] = True
 		context["entry"] = entries[0].content.replace("\n", "</br>")
 		tags = entries[0].tags.all()
 		if len(tags) > 0:
-			context["has_tags"] = True
 			context["tags"] = ", ".join(str(t) for t in tags)
-		else:
-			context["has_tags"] = False
-	else:
-		context["has_entry"] = False
 
 	return HttpResponse(template.render(context, request))
 
@@ -117,10 +108,8 @@ def get_all_entries(request):
 			date=str(e.day),
 		)
 		if e.header:
-			to_add["has_header"] = True
 			to_add["header"] = e.header
 		if e.to_do:
-			to_add["has_to_do"] = True
 			to_add["to_do"] = e.to_do.replace("\n", "; ")
 		if e.image_set.exists():
 			to_add["image_set"] = e.image_set.all()
@@ -130,13 +119,11 @@ def get_all_entries(request):
 		to_add["content_idea"] = e.content_idea
 		tags = e.tags.order_by("tag")
 		if len(tags) > 0:
-			to_add["has_tags"] = True
 			to_add["tags"] = ", ".join(str(t) for t in tags)
 		if e.day > datetime.datetime.date(datetime.datetime.today()):
 			to_add["in_future"] = True
 		done = e.done.order_by('done')
 		if len(done) > 0:
-			to_add['has_done'] = True
 			to_add['done'] = ', '.join(str(d) for d in done)
 		to_add["place"] = e.place
 		context["entries"].append(to_add)
