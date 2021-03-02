@@ -1,3 +1,4 @@
+{% load static %}
 {% load html_corrections %}
 
 <body>
@@ -23,6 +24,13 @@
 					{% if e.content_idea %}
 						<h3><i>Ideas:</i></h3>
 						{{ e.content_idea|date_tag_a|squish_ul_linebreaks|safe|linebreaks }}
+					{% endif %}
+
+					{% if e.image_set.exists %}
+						<h3><i>Images:</i></h3>
+						{% for pic in e.image_set %}
+							<img src="{% get_media_prefix %}{{ pic.image }}">
+						{% endfor %}
 					{% endif %}
 				</p>
 				{% if e.has_to_do %}

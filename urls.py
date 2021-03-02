@@ -14,6 +14,7 @@ Including another URLconf
     2. Add a URL to urlpatterns:  url(r'^blog/', include('blog.urls'))
 """
 from django.conf.urls import url
+from django.conf.urls.static import static
 from django.contrib import admin
 from django.views.generic import RedirectView
 
@@ -26,5 +27,5 @@ urlpatterns = [
     url(r'^$', get_all_entries),
     url(r'^graph$', GraphView.as_view()),
 	url(r'^(?P<year>[0-9]+)/(?P<month>[0-9]+)/(?P<day>[0-9]+)/$', greetings, name='jurnal'),
-	url(r'^', greetings),
-]
+#	url(r'^', greetings),  # this would break media
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

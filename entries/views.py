@@ -122,6 +122,8 @@ def get_all_entries(request):
 		if e.to_do:
 			to_add["has_to_do"] = True
 			to_add["to_do"] = e.to_do.replace("\n", "; ")
+		if e.image_set.exists():
+			to_add["image_set"] = e.image_set.all()
 		to_add["content"] = e.content
 		to_add["content_day"] = e.content_day
 		to_add["content_thought"] = e.content_thought

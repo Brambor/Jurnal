@@ -95,3 +95,11 @@ class Entry(models.Model):
 	edited = models.DateTimeField(
 		auto_now=True,
 	)
+
+
+class Image(models.Model):
+	image = models.ImageField()
+	entry = models.ForeignKey(
+		Entry,
+		on_delete=models.CASCADE,
+	)
