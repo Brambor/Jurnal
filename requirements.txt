@@ -1,2 +1,4 @@
 Django
 plotly
+beautifulsoup4
+Pillow
