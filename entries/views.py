@@ -6,7 +6,7 @@ from django.template import loader
 from .models import Entry
 from .utils import generate_graph, weekday, pass_context_of_entry
 
-import datetime
+from datetime import datetime, timedelta
 import os
 
 
@@ -29,9 +29,9 @@ def greetings(request, **kwargs):
 			del all_pics[all_pics.index(p)]
 
 	if kwargs.get("year") is None:
-		requested_date = datetime.datetime.date(datetime.datetime.today())
+		requested_date = datetime.date(datetime.today())
 	else:
-		requested_date = datetime.datetime.date(datetime.datetime(
+		requested_date = datetime.date(datetime(
 			year=int(kwargs.get("year")),
 			month=int(kwargs.get("month")),
 			day=int(kwargs.get("day")),
@@ -41,7 +41,7 @@ def greetings(request, **kwargs):
 	contains_requested_date = False
 
 	for pic in all_pics:
-		time = datetime.datetime.date(datetime.datetime.fromtimestamp(
+		time = datetime.date(datetime.fromtimestamp(
 			os.path.getmtime(pic))
 		)
 		added = False
@@ -72,9 +72,9 @@ def greetings(request, **kwargs):
 				pic_tuples[(pic_tuples.index(that_date) + 1) % len(pic_tuples)][0]
 			).replace("-", "/"),
 		"prev_day_url":
-			"/" + str(requested_date - datetime.timedelta(days=1)).replace("-", "/"),
+			"/" + str(requested_date - timedelta(days=1)).replace("-", "/"),
 		"next_day_url":
-			"/" + str(requested_date + datetime.timedelta(days=1)).replace("-", "/"),
+			"/" + str(requested_date + timedelta(days=1)).replace("-", "/"),
 	}
 
 	if that_date[1]:
