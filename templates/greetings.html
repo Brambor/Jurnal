@@ -1,9 +1,6 @@
-<head>
-	{% load static %}
-	{% static 'styles.css' %}
-	<link rel="stylesheet" type="text/css" href="{% static 'styles.css' %}" />
-	<link rel="stylesheet" type="text/css" href="{% static 'styles.css' %}" />
-</head>
+{% load static %}
+<link rel="stylesheet" type="text/css" href="{% static 'styles.css' %}" />
+
 <body>
 	<p>You are looking at <b>{{ date }}</b></p>
 	<p>Move by day <a href={{prev_day_url}}><-</a> <a href={{next_day_url}}>-></a></p>

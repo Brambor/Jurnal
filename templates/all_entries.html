@@ -1,12 +1,14 @@
 {% load static %}
 {% load html_corrections %}
 
+<link rel="stylesheet" type="text/css" href="{% static 'style.css' %}">
+
 <body>
-	<div style="max-width: 900px; text-align: justify; margin: auto; padding-top: 20px; padding-bottom: 20px;">
+	<div class="main-box">
 		{% for e in entries %}
-			<div style="margin-bottom: 50px; {% if e.in_future %}color:gray;{% endif %}">
-				<a style="text-decoration: none;" href="#{{ e.day }}">
-					<h3 style="color:orange;" id="{{ e.day }}">{{ e.weekday_date }}</h3>
+			<div class="entry" style="{% if e.in_future %}color:gray;{% endif %}">
+				<a class="header" href="#{{ e.day }}">
+					<h3 id="{{ e.day }}">{{ e.weekday_date }}</h3>
 				</a>
 				{% if e.header %}
 					<h2>{{ e.header }}</h2>
