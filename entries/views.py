@@ -90,11 +90,7 @@ def greetings(request, **kwargs):
 def get_all_entries(request):
 	template = loader.get_template('all_entries.html')
 
-	context = {"entries": []}
-
-	entries = Entry.objects.order_by("-day")
-	for e in entries:
-		context["entries"].append(pass_context_of_entry(e))
+	context = {"entries": (pass_context_of_entry(e) for e in Entry.objects.order_by("-day"))}
 
 	return HttpResponse(template.render(context, request))
 
