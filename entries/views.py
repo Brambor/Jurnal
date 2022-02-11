@@ -4,7 +4,7 @@ from django.views.generic.base import TemplateView
 from django.template import loader
 
 from .models import Entry
-from .utils import generate_graph, weekday
+from .utils import generate_graph, weekday, pass_context_of_entry
 
 import datetime
 import os
@@ -65,10 +65,6 @@ def greetings(request, **kwargs):
 			break
 
 	context = {
-		"date": "{weekday}, {date}".format(
-			weekday=weekday(requested_date.weekday()),
-			date=requested_date,
-		),
 		"existing_prev_day_url":
 			"/" + str(pic_tuples[pic_tuples.index(that_date) - 1][0]).replace("-", "/"),
 		"existing_next_day_url":
@@ -86,10 +82,7 @@ def greetings(request, **kwargs):
 
 	entries = Entry.objects.filter(day=requested_date)
 	if len(entries) > 0:
-		context["entry"] = entries[0].content.replace("\n", "</br>")
-		tags = entries[0].tags.all()
-		if len(tags) > 0:
-			context["tags"] = ", ".join(str(t) for t in tags)
+		context["entry"] = pass_context_of_entry(entries[0])
 
 	return HttpResponse(template.render(context, request))
 
@@ -101,32 +94,7 @@ def get_all_entries(request):
 
 	entries = Entry.objects.order_by("-day")
 	for e in entries:
-		to_add = {}
-		to_add["day"] = str(e.day)
-		to_add["weekday_date"] = "{weekday}, {date}".format(
-			weekday=e.weekday(),
-			date=str(e.day),
-		)
-		if e.header:
-			to_add["header"] = e.header
-		if e.to_do:
-			to_add["to_do"] = e.to_do.replace("\n", "; ")
-		if e.image_set.exists():
-			to_add["image_set"] = e.image_set.all()
-		to_add["content"] = e.content
-		to_add["content_day"] = e.content_day
-		to_add["content_thought"] = e.content_thought
-		to_add["content_idea"] = e.content_idea
-		tags = e.tags.order_by("tag")
-		if len(tags) > 0:
-			to_add["tags"] = ", ".join(str(t) for t in tags)
-		if e.day > datetime.datetime.date(datetime.datetime.today()):
-			to_add["in_future"] = True
-		done = e.done.order_by('done')
-		if len(done) > 0:
-			to_add['done'] = ', '.join(str(d) for d in done)
-		to_add["place"] = e.place
-		context["entries"].append(to_add)
+		context["entries"].append(pass_context_of_entry(e))
 
 	return HttpResponse(template.render(context, request))
 

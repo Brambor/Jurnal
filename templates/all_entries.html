@@ -1,53 +1,11 @@
 {% load static %}
-{% load html_corrections %}
 
 <link rel="stylesheet" type="text/css" href="{% static 'style.css' %}">
 
 <body>
 	<div class="main-box">
-		{% for e in entries %}
-			<div class="entry" style="{% if e.in_future %}color:gray;{% endif %}">
-				<a class="header" href="#{{ e.day }}">
-					<h3 id="{{ e.day }}">{{ e.weekday_date }}</h3>
-				</a>
-				{% if e.header %}
-					<h2>{{ e.header }}</h2>
-				{% endif %}
-				<p>
-					{{ e.content|date_tag_a|squish_ul_linebreaks|safe|linebreaks }}
-					{% if e.content_day %}
-						<h3><i>Day:</i></h3>
-						{{ e.content_day|date_tag_a|squish_ul_linebreaks|safe|linebreaks }}
-					{% endif %}
-					{% if e.content_thought %}
-						<h3><i>Thoughts:</i></h3>
-						{{ e.content_thought|date_tag_a|squish_ul_linebreaks|safe|linebreaks }}
-					{% endif %}
-					{% if e.content_idea %}
-						<h3><i>Ideas:</i></h3>
-						{{ e.content_idea|date_tag_a|squish_ul_linebreaks|safe|linebreaks }}
-					{% endif %}
-
-					{% if e.image_set.exists %}
-						<h3><i>Images:</i></h3>
-						{% for pic in e.image_set %}
-							<img src="{% get_media_prefix %}{{ pic.image }}">
-						{% endfor %}
-					{% endif %}
-				</p>
-				{% if e.to_do %}
-					<p><b>To Do: </b>{{ e.to_do }}</p>
-				{% endif %}
-				{% if e.done %}
-					<p><b>Done: </b>{{ e.done }}</p>
-				{% endif %}
-				<p>
-					{% if e.tags %}
-						<b>tags:</b> {{ e.tags }}
-					{% endif %}
-					<b>place:</b> {{ e.place }}
-				</p>
-			</div>
+		{% for entry in entries %}
+			{% include "entry.html" %}
 		{% endfor %}
 	</div>
 </body>

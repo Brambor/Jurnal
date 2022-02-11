@@ -5,6 +5,7 @@ from datetime import datetime
 from django import template
 
 from ..models import Entry
+from ..utils import weekday
 
 
 register = template.Library()
@@ -70,7 +71,7 @@ def decorate_date(match):
 		return f"<i>{match.group()} (incorect date format)</i>"
 	entries = Entry.objects.filter(day=day)
 	if not entries:
-		return f"<i>{match.group()} (no entry)</i>"
+		return f"<i>{weekday(day.weekday())}, {match.group()} (no entry)</i>"
 	elif len(entries) > 1:
 		return f"<i>{match.group()} (huh, found {len(entries)} entries)</i>"
 	else:

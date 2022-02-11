@@ -1,0 +1,45 @@
+{% load static %}
+{% load html_corrections %}
+
+<div class="entry" style="{% if entry.in_future %}color:gray;{% endif %}">
+	<a class="header" href="#{{ entry.day }}">
+		<h3 id="{{ entry.day }}">{{ entry.weekday_date }}</h3>
+	</a>
+	{% if entry.header %}
+		<h2>{{ entry.header }}</h2>
+	{% endif %}
+	<p>
+		{{ entry.content|date_tag_a|squish_ul_linebreaks|safe|linebreaks }}
+		{% if entry.content_day %}
+			<h3><i>Day:</i></h3>
+			{{ entry.content_day|date_tag_a|squish_ul_linebreaks|safe|linebreaks }}
+		{% endif %}
+		{% if entry.content_thought %}
+			<h3><i>Thoughts:</i></h3>
+			{{ entry.content_thought|date_tag_a|squish_ul_linebreaks|safe|linebreaks }}
+		{% endif %}
+		{% if entry.content_idea %}
+			<h3><i>Ideas:</i></h3>
+			{{ entry.content_idea|date_tag_a|squish_ul_linebreaks|safe|linebreaks }}
+		{% endif %}
+
+		{% if entry.image_set.exists %}
+			<h3><i>Images:</i></h3>
+			{% for pic in entry.image_set %}
+				<img src="{% get_media_prefix %}{{ pic.image }}">
+			{% endfor %}
+		{% endif %}
+	</p>
+	{% if entry.to_do %}
+		<p><b>To Do: </b>{{ entry.to_do }}</p>
+	{% endif %}
+	{% if entry.done %}
+		<p><b>Done: </b>{{ entry.done }}</p>
+	{% endif %}
+	<p>
+		{% if entry.tags %}
+			<b>tags:</b> {{ entry.tags }}
+		{% endif %}
+		<b>place:</b> {{ entry.place }}
+	</p>
+</div>
