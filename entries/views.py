@@ -86,6 +86,20 @@ def greetings(request, **kwargs):
 
 	return HttpResponse(template.render(context, request))
 
+def list_headers(request, **kwargs):
+	template = loader.get_template('list_headers.html')
+
+	context = {"entries": tuple(Entry.objects.order_by("-day"))}
+
+	return HttpResponse(template.render(context, request))
+
+def entry(request, **kwargs):
+	template = loader.get_template('single_entry.html')
+
+	context = {"entry": pass_context_of_entry(
+		Entry.objects.filter(pk=kwargs.get("pk")).first())}  # TODO get pk
+
+	return HttpResponse(template.render(context, request))
 
 def get_all_entries(request):
 	template = loader.get_template('all_entries.html')

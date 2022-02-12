@@ -1,0 +1,12 @@
+{% load static %}
+
+<link rel="stylesheet" type="text/css" href="{% static 'style.css' %}">
+
+<body>
+	<div class="main-box">
+		<h2>List of all headers</h2>
+		{% for entry in entries %}
+			<p><a href="entry/{{entry.pk}}">{{ entry }}</a></p>
+		{% endfor %}
+	</div>
+</body>
