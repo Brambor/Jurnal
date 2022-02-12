@@ -44,6 +44,7 @@ def weekday(n):
 def pass_context_of_entry(entry):
 	e = entry
 	return {
+		"pk": e.pk,
 		"day": str(e.day),
 		"weekday_date": f"{e.weekday()}, {e.day}",
 		"header": e.header,

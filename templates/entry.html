@@ -2,9 +2,12 @@
 {% load html_corrections %}
 
 <div class="entry" style="{% if entry.in_future %}color:gray;{% endif %}">
-	<a class="header" href="#{{ entry.day }}">
-		<h3 id="{{ entry.day }}">{{ entry.weekday_date }}</h3>
-	</a>
+	<h3 id="{{ entry.day }}">
+		<a class="header" href="#{{ entry.day }}">{{ entry.weekday_date }}</a>
+		<a href="/admin/entries/entry/{{ entry.pk }}/change/">
+			<img src="/static/admin/img/icon-changelink.svg"></a>
+	</h3>
+
 	{% if entry.header %}
 		<h2>{{ entry.header }}</h2>
 	{% endif %}
