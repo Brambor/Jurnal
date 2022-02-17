@@ -20,11 +20,12 @@ from django.views.generic import RedirectView
 
 import settings
 
-from entries.views import GraphView, greetings, get_all_entries, list_headers, entry
+from entries.views import GraphView, greetings, get_all_entries, list_headers, entry, index
 
 urlpatterns = [
 	url(r'^admin/', admin.site.urls),
-    url(r'^$', get_all_entries),
+    url(r'^$', index),
+    url(r'^all$', get_all_entries),
     url(r'^list$', list_headers),
     url(r'^entry/(?P<pk>[0-9]+)$', entry),
     url(r'^graph$', GraphView.as_view()),

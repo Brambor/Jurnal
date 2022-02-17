@@ -86,6 +86,14 @@ def greetings(request, **kwargs):
 
 	return HttpResponse(template.render(context, request))
 
+def index(request, **kwargs):
+	template = loader.get_template('index.html')
+
+	context = {"entry": pass_context_of_entry(
+		Entry.objects.order_by("-day").first())}
+
+	return HttpResponse(template.render(context, request))
+
 def list_headers(request, **kwargs):
 	template = loader.get_template('list_headers.html')
 
