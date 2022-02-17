@@ -97,7 +97,7 @@ def entry(request, **kwargs):
 	template = loader.get_template('single_entry.html')
 
 	context = {"entry": pass_context_of_entry(
-		Entry.objects.filter(pk=kwargs.get("pk")).first())}  # TODO get pk
+		Entry.objects.get(pk=kwargs.get("pk")))}
 
 	return HttpResponse(template.render(context, request))
 
