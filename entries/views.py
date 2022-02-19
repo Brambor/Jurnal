@@ -1,13 +1,18 @@
 
-from django.http import HttpResponse
-from django.views.generic.base import TemplateView
+from django.contrib.admin.models import LogEntry
+from django.core import serializers
+from django.http import HttpResponse, JsonResponse
 from django.template import loader
+from django.views.decorators.csrf import csrf_exempt
+from django.views.generic.base import TemplateView
 
 from .models import Entry
 from .utils import generate_graph, weekday, pass_context_of_entry
 
 from datetime import datetime, timedelta
+import json
 import os
+import requests
 
 
 def greetings(request, **kwargs):
@@ -108,6 +113,47 @@ def entry(request, **kwargs):
 		Entry.objects.get(pk=kwargs.get("pk")))}
 
 	return HttpResponse(template.render(context, request))
+
+def sync_request_send(request):
+	url = 'http://192.168.8.157:8000/sync_recieve'
+	serialized_my = serializers.serialize("json", LogEntry.objects.all().reverse())
+
+	response = requests.post(url, json=serialized_my)
+
+	parsed_their = json.loads(response.json())
+	parsed_my = json.loads(serialized_my)
+
+	idx = -1
+	for idx_good, (my, theirs) in enumerate(zip(parsed_my, parsed_their)):
+		if my == theirs:
+			idx = idx_good
+		else:
+			break
+	matches = idx+1
+	ahead = len(parsed_my) - matches
+	behind = len(parsed_their) - matches
+
+	if ahead == 0 == behind:
+		msg = "Everything up to date!"
+	elif ahead > 0 and behind > 0:
+		msg = f"We are behind by {behind} and ahead by {ahead}."
+	elif ahead > 0:
+		msg = f"We are ahead by {ahead}."
+	else: # behind > 0
+		msg = f"We are behind by {behind}."
+
+	template = loader.get_template('sync.html')
+	context = {
+		"matches": idx+1,
+		"msg": msg,
+	}
+	return HttpResponse(template.render(context, request))
+
+# Not safe, but I don't know how to get csrf token in sync_request_send, requests.post
+@csrf_exempt
+def sync_request_recieve(request):
+	return JsonResponse(serializers.serialize("json",
+		LogEntry.objects.all().reverse()), safe=False)  # safe=False, so it doesn't have to be a dict
 
 def get_all_entries(request):
 	template = loader.get_template('all_entries.html')

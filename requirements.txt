@@ -2,3 +2,4 @@ Django < 4
 plotly
 beautifulsoup4
 Pillow
+requests

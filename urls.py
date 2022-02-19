@@ -20,7 +20,7 @@ from django.views.generic import RedirectView
 
 import settings
 
-from entries.views import GraphView, greetings, get_all_entries, list_headers, entry, index
+from entries.views import GraphView, greetings, get_all_entries, list_headers, entry, index, sync_request_send, sync_request_recieve
 
 urlpatterns = [
 	url(r'^admin/', admin.site.urls),
@@ -28,6 +28,8 @@ urlpatterns = [
     url(r'^all$', get_all_entries),
     url(r'^list$', list_headers),
     url(r'^entry/(?P<pk>[0-9]+)$', entry),
+    url(r'^sync$', sync_request_send),
+    url(r'^sync_recieve$', sync_request_recieve),
     url(r'^graph$', GraphView.as_view()),
 	url(r'^(?P<year>[0-9]+)/(?P<month>[0-9]+)/(?P<day>[0-9]+)/$', greetings, name='jurnal'),
 #	url(r'^', greetings),  # this would break media
