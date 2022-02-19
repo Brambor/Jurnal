@@ -26,7 +26,10 @@ SECRET_KEY = '=ci)_yu!6twu9)ww@36!(s5#q^@bwpt(&mmdd6x130&_#2b_)j'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    'localhost',
+    '192.168.8.157',  # Jade-AD when wired by ehernet cable at place:M
+]
 
 
 # Application definition
