@@ -118,7 +118,15 @@ def sync_request_send(request):
 	url = 'http://192.168.8.157:8000/sync_recieve'
 	serialized_my = serializers.serialize("json", LogEntry.objects.all().reverse())
 
-	response = requests.post(url, json=serialized_my)
+	try:
+		response = requests.post(url, json=serialized_my)
+	except requests.exceptions.ConnectionError as e:
+		template = loader.get_template('sync.html')
+		context = {
+			"matches": "?",
+			"msg": repr(e),
+		}
+		return HttpResponse(template.render(context, request))
 
 	parsed_their = json.loads(response.json())
 	parsed_my = json.loads(serialized_my)
