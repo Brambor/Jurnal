@@ -114,6 +114,25 @@ def entry(request, **kwargs):
 
 	return HttpResponse(template.render(context, request))
 
+def entry_history(request, **kwargs):
+	template = loader.get_template('entry_history.html')
+
+	context = {"entry": Entry.objects.get(pk=kwargs.get("pk"))}
+
+	le = LogEntry.objects.first()
+
+	print(
+		"\n".join(str(x) for x in (le.action_time,
+		le.user,
+		le.content_type,
+		le.object_id,
+		le.object_repr,
+		le.action_flag,
+		le.change_message,))
+	)
+
+	return HttpResponse(template.render(context, request))
+
 def sync_request_send(request):
 	url = 'http://192.168.8.157:8000/sync_recieve'
 	serialized_my = serializers.serialize("json", LogEntry.objects.all().reverse())
