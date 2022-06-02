@@ -169,7 +169,16 @@ def sync_request_send(request):
 			url = f'{ip.address}:8000'
 	'''
 
-	url = 'http://192.168.8.157:8000/sync_recieve'
+	# same git version ??? TODO (compare hashes of last commit)
+	# TODO hardcoded to Jade-AD
+	url = 'http://192.168.8.157:8000/sync_recieve'  # pc
+	url = 'http://192.168.8.184:8000/sync_recieve'  # mobile
+	"""
+	for debug:
+	q1 = LogEntry.objects.all().reverse()[:1000]
+	q2 = [] #LogEntry.objects.all().reverse()[1005:1006]
+	serialized_my = serializers.serialize("json", list(chain(q1, q2)))
+	"""
 	serialized_my = serializers.serialize("json", LogEntry.objects.all().reverse())
 
 	try:
@@ -199,10 +208,14 @@ def sync_request_send(request):
 		msg = "Everything up to date!"
 	elif ahead > 0 and behind > 0:
 		msg = f"We are behind by {behind} and ahead by {ahead}."
+		# TODO merge possible?
 	elif ahead > 0:
 		msg = f"We are ahead by {ahead}."
+		# TODO send database
 	else: # behind > 0
 		msg = f"We are behind by {behind}."
+		# TODO retrieve their database (not users, just models!)
+	# TODO You, mobile, have to apply these changes
 
 	template = loader.get_template('sync.html')
 	context = {
@@ -211,11 +224,18 @@ def sync_request_send(request):
 	}
 	return HttpResponse(template.render(context, request))
 
+	# TODO INACCESIBLE
+	url = 'http://localhost:8000/sync_complete'  # replace with other python app url or ip
+
 # Not safe, but I don't know how to get csrf token in sync_request_send, requests.post
 @csrf_exempt
 def sync_request_recieve(request):
 	return JsonResponse(serializers.serialize("json",
 		LogEntry.objects.all().reverse()), safe=False)  # safe=False, so it doesn't have to be a dict
+
+def sync_request_complete(request):
+	# TODO apply changes
+	return HttpResponse()
 
 def get_all_entries(request):
 	template = loader.get_template('all_entries.html')
