@@ -133,3 +133,20 @@ class Image(models.Model):
 		Entry,
 		on_delete=models.CASCADE,
 	)
+
+
+class Machine(models.Model):
+	# my last entry in Log that was synced.
+	# Then in List of Machines, there can be how many am I ahead (offline)
+	last_sync = models.IntegerField()  # probably
+	# (field for last synced)
+
+
+class IPAddress(models.Model):
+	address = models.CharField(
+		max_length=255,
+	)
+	machine = models.ForeignKey(
+		Machine,
+		on_delete=models.CASCADE,
+	)
