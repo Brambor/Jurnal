@@ -26,7 +26,7 @@ def generate_graph(x, y_data, title, layout_edit={}):
 
 	div = plot(
 		fig,
-		filename='basic-bar',
+		filename=title,
 		output_type='div',
 	)
 

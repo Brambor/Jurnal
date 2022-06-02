@@ -181,7 +181,7 @@ class GraphView(TemplateView):
 
 		x = [e.day for e in entries]
 
-		# Characters per day
+		# Characters each day
 
 		y_chars_data = {
 			'content': [len(e.content) for e in entries],
@@ -190,7 +190,7 @@ class GraphView(TemplateView):
 			'idea': [len(e.content_idea) for e in entries],
 		}
 
-		context['graph_chars'] = generate_graph(x, y_chars_data, 'Characters', {'width': 1887}) # to prevent horizontal scalebar
+		context['graph_chars'] = generate_graph(x, y_chars_data, 'Characters each day', {'width': 1887}) # to prevent horizontal scalebar
 
 		# Day ratio
 
@@ -206,9 +206,9 @@ class GraphView(TemplateView):
 				else:
 					y_ratio_data[key].append(0)
 
-		context['graph_ratio'] = generate_graph(x, y_ratio_data, 'Ratios', {'height':311}) #933/3
+		context['graph_ratio'] = generate_graph(x, y_ratio_data, 'Day ratio', {'height':311}) #933/3
 
-		# Average chars per day
+		# Average chars per day since init
 
 		y_average_data = {key: [] for key in y_chars_data}
 		total_chars = {key: 0 for key in y_chars_data}
@@ -217,9 +217,9 @@ class GraphView(TemplateView):
 				total_chars[key] += chars
 				y_average_data[key].append(total_chars[key]//(i+1))
 
-		context['graph_average'] = generate_graph(x, y_average_data, 'Average', {'height':311})
+		context['graph_average'] = generate_graph(x, y_average_data, 'Average chars per day since init', {'height':311})
 
-		# Average chars last seven days
+		# Average chars last 7 days
 
 		y_average_7_days_data = {key: y_average_data[key][:7] for key in y_chars_data}
 		total_chars = {key: sum(y_chars_data[key][:7]) for key in y_chars_data}
@@ -229,6 +229,6 @@ class GraphView(TemplateView):
 				total_chars[key] += chars - y_chars_data[key][i]
 				y_average_7_days_data[key].append(total_chars[key]//7)
 
-		context['graph_average_7_days'] = generate_graph(x, y_average_7_days_data, 'Average of last 7 days', {'height':311})
+		context['graph_average_7_days'] = generate_graph(x, y_average_7_days_data, 'Average chars last 7 days', {'height':311})
 
 		return context
