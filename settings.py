@@ -29,6 +29,7 @@ DEBUG = True
 ALLOWED_HOSTS = [
     'localhost',
     '192.168.8.157',  # Jade-AD when wired by ehernet cable at place:M
+    '192.168.8.184',  # mobile when on wi-fi at place:M
 ]
 
 
