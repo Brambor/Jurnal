@@ -24,7 +24,7 @@ class ColumnCheckboxSelectMultiple(forms.CheckboxSelectMultiple):
         has_id = attrs and 'id' in attrs
         final_attrs = self.build_attrs(attrs)#, name=name) #  didn't work with name=name
         choices_enum = list(enumerate(chain(self.choices, choices)))
-        
+
         # This is the part that splits the choices into columns.
         # Slices vertically.  Could be changed to slice horizontally, etc.
         column_sizes = columnize(len(choices_enum), self.columns)
