@@ -100,15 +100,29 @@ class Entry(models.Model):
 		auto_now=True,
 	)
 
+
+class Person(models.Model):
+	def __str__(self):
+		return self.display_name
+
+	display_name = models.CharField(
+		max_length=100,
+	)
+
+
 class ReadAt(models.Model):
 	def __str__(self):
-		return f"Read {self.entry} @ {timezone.localtime(self.date).strftime('%Y-%m-%d %H:%M:%S')}"
+		return f"{self.read_by} read {self.entry} @ {timezone.localtime(self.date).strftime('%Y-%m-%d %H:%M:%S')}"
 
 	date = models.DateTimeField(
 		default=timezone.now
 	)
 	entry = models.ForeignKey(
 		Entry,
+		on_delete=models.CASCADE,
+	)
+	read_by = models.ForeignKey(
+		Person,
 		on_delete=models.CASCADE,
 	)
 

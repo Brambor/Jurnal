@@ -4,7 +4,7 @@ from django.forms import Textarea, RadioSelect, ChoiceField
 from django.db import models
 
 from .forms import ColumnCheckboxSelectMultiple
-from .models import Done, Entry, Image, ReadAt, Tag
+from .models import Done, Entry, Image, Person, ReadAt, Tag
 
 
 class ImagesInLine(admin.TabularInline):
@@ -32,6 +32,10 @@ class ReadAtAdmin(admin.ModelAdmin):
 	model = ReadAt
 
 
+class PersonAdmin(admin.ModelAdmin):
+	model = Person
+
+
 class TagAdmin(admin.ModelAdmin):
 	model = Tag
 
@@ -44,4 +48,5 @@ admin.site.register(Tag, TagAdmin)
 admin.site.register(Done, DoneAdmin)
 admin.site.register(Entry, EntryAdmin)
 admin.site.register(Image, ImageAdmin)
+admin.site.register(Person, PersonAdmin)
 admin.site.register(ReadAt, ReadAtAdmin)
