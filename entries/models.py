@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from django.db import models
+from django.utils import timezone
 
 from .utils import weekday
 
@@ -46,6 +47,9 @@ class Entry(models.Model):
 
 	def weekday(self):
 		return weekday(self.day.weekday())
+
+	def timesread(self):
+		return ReadAt.objects.filter(entry=self).count()
 
 	day = models.DateField()
 	header = models.CharField(
@@ -94,6 +98,18 @@ class Entry(models.Model):
 	)
 	edited = models.DateTimeField(
 		auto_now=True,
+	)
+
+class ReadAt(models.Model):
+	def __str__(self):
+		return f"Read {self.entry} @ {timezone.localtime(self.date).strftime('%Y-%m-%d %H:%M:%S')}"
+
+	date = models.DateTimeField(
+		default=timezone.now
+	)
+	entry = models.ForeignKey(
+		Entry,
+		on_delete=models.CASCADE,
 	)
 
 

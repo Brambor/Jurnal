@@ -20,11 +20,12 @@ from django.views.generic import RedirectView
 
 import settings
 
-from entries.views import GraphView, greetings, get_all_entries, list_headers, entry, index, sync_request_send, sync_request_recieve
+from entries.views import GraphView, greetings, get_all_entries, list_headers, add_read_at, entry, index, sync_request_send, sync_request_recieve
 
 urlpatterns = [
 	url(r'^admin/', admin.site.urls),
     url(r'^$', index),
+    url(r'^readAt/(?P<pk>[0-9]+)$', add_read_at),
     url(r'^all$', get_all_entries),
     url(r'^list$', list_headers),
     url(r'^entry/(?P<pk>[0-9]+)$', entry),

@@ -1,0 +1,13 @@
+{% include "navbar.html" %}
+
+{% if read_at is not None %}
+    <p>ReadAt successfuly added!</p>
+    <p>{{read_at}}</p>
+    <p>Note: Use browser back functionality to get back.</p>
+{% endif %}
+
+<form action="/readAt/{{ pk }}" method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <p><input type="submit" value="Submit"></p>
+</form>

@@ -58,4 +58,5 @@ def pass_context_of_entry(entry):
 		"in_future": e.day > datetime.date(datetime.today()),
 		"done": ', '.join(str(d) for d in e.done.order_by('done')),
 		"place": e.place,
+		"timesread": e.timesread(),
 	}

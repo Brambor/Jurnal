@@ -2,10 +2,12 @@
 from django.contrib.admin.models import LogEntry
 from django.core import serializers
 from django.http import HttpResponse, JsonResponse
+from django.shortcuts import redirect
 from django.template import loader
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic.base import TemplateView
 
+from .forms import ReadAtForm
 from .models import Entry
 from .utils import generate_graph, weekday, pass_context_of_entry
 
@@ -111,6 +113,32 @@ def entry(request, **kwargs):
 
 	context = {"entry": pass_context_of_entry(
 		Entry.objects.get(pk=kwargs.get("pk")))}
+
+	return HttpResponse(template.render(context, request))
+
+def add_read_at(request, **kwargs):
+	# if this is a POST request we need to process the form data
+	read_at = None
+	if request.method == 'POST':
+		# create a form instance and populate it with data from the request:
+		form = ReadAtForm(request.POST)
+		# check whether it's valid:
+		if form.is_valid():
+			# process the data in form.cleaned_data as required
+			read_at = form.save()
+			# TODO redirect to a new URL, redirected to self
+
+	# if a GET (or any other method), create a prepopulated form
+	else:
+		form = ReadAtForm(initial={"entry": kwargs.get("pk")})
+
+	template = loader.get_template('add_ReadAt.html')
+
+	context = {
+		"form": form,
+		"pk": kwargs.get("pk"),
+		"read_at": read_at,
+	}
 
 	return HttpResponse(template.render(context, request))
 

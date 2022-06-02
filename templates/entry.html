@@ -44,5 +44,8 @@
 			<b>tags:</b> {{ entry.tags }}
 		{% endif %}
 		<b>place:</b> {{ entry.place }}
+		<b>read {{ entry.timesread }} times</b>
+		<a href="/readAt/{{ entry.pk }}">
+			<img src="/static/admin/img/icon-addlink.svg"></a>
 	</p>
 </div>

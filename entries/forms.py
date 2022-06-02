@@ -1,5 +1,3 @@
-# https://djangosnippets.org/snippets/2236/
-
 import math
 from itertools import chain
 
@@ -8,6 +6,15 @@ from django.utils.encoding import force_text
 from django.utils.html import conditional_escape
 from django.utils.safestring import mark_safe
 
+from entries.models import ReadAt
+
+class ReadAtForm(forms.ModelForm):
+    class Meta:
+        model = ReadAt
+        exclude = []
+
+
+# https://djangosnippets.org/snippets/2236/
 class ColumnCheckboxSelectMultiple(forms.CheckboxSelectMultiple):
     """
     Widget that renders multiple-select checkboxes in columns.
