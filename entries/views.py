@@ -91,7 +91,7 @@ def greetings(request, **kwargs):
 
 	return HttpResponse(template.render(context, request))
 
-def index(request, **kwargs):
+def index(request):
 	template = loader.get_template('index.html')
 
 	context = {"entry": pass_context_of_entry(
@@ -99,7 +99,7 @@ def index(request, **kwargs):
 
 	return HttpResponse(template.render(context, request))
 
-def list_headers(request, **kwargs):
+def list_headers(request):
 	template = loader.get_template('list_headers.html')
 
 	context = {"entries": tuple(Entry.objects.order_by("-day"))}
