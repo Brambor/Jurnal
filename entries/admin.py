@@ -25,7 +25,7 @@ class EntryAdmin(admin.ModelAdmin):
 
 
 class ImageAdmin(admin.ModelAdmin):
-	model = Tag
+	model = Image
 
 
 class TagAdmin(admin.ModelAdmin):
