@@ -8,13 +8,14 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.generic.base import TemplateView
 
 from .forms import ReadAtForm
-from .models import Entry
+from .models import Entry, IPAddress, Machine
 from .utils import generate_graph, weekday, pass_context_of_entry
 
 from datetime import datetime, timedelta
 import json
 import os
 import requests
+import subprocess
 
 
 def greetings(request, **kwargs):
@@ -143,6 +144,31 @@ def add_read_at(request, **kwargs):
 	return HttpResponse(template.render(context, request))
 
 def sync_request_send(request):
+	# check all machines (TODO: should do that after page load with JavaScript)
+	'''
+	for machine in Machine.objects.all():
+		print(f"Machine: {machine}")
+		for ip in IPAddress.objects.filter(machine=machine):
+
+			"""
+			print(f"ping {ip}")
+			a = ""
+			p = subprocess.Popen(f'ping {ip.address}', capture_output=True)
+			p.wait()
+#			print(p.poll())
+			print(p)
+#			help(p)
+			"""
+			print(f"\tping {ip}")
+			subprocess.Popen(f"ping {ip.address}", stdout=subprocess.PIPE)
+			out = subprocess.run(['ping', ip.address], capture_output=True)
+			print(f"MSG ''{out.stdout.decode()}'")
+			# MACHINE REACHABLE
+
+			# port isn't supposed to be pinged
+			url = f'{ip.address}:8000'
+	'''
+
 	url = 'http://192.168.8.157:8000/sync_recieve'
 	serialized_my = serializers.serialize("json", LogEntry.objects.all().reverse())
 

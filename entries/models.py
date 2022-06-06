@@ -136,6 +136,12 @@ class Image(models.Model):
 
 
 class Machine(models.Model):
+	def __str__(self):
+		return self.name
+
+	name = models.CharField(
+		max_length=255,
+	)
 	# my last entry in Log that was synced.
 	# Then in List of Machines, there can be how many am I ahead (offline)
 	last_sync = models.IntegerField()  # probably
@@ -143,9 +149,9 @@ class Machine(models.Model):
 
 
 class IPAddress(models.Model):
-	address = models.CharField(
-		max_length=255,
-	)
+	def __str__(self):
+		return f"{self.address} of {self.machine}"
+	address = models.GenericIPAddressField()
 	machine = models.ForeignKey(
 		Machine,
 		on_delete=models.CASCADE,
