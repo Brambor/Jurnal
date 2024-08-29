@@ -12,18 +12,34 @@
 		<h2>{{ entry.header }}</h2>
 	{% endif %}
 	<p>
-		{{ entry.content|date_tag_a|squish_ul_linebreaks|safe|linebreaks }}
+		{% if single_entry %}
+			{{ entry.content|date_tag_a_entry|squish_ul_linebreaks|safe|linebreaks }}
+		{% else %}
+			{{ entry.content|date_tag_a|squish_ul_linebreaks|safe|linebreaks }}
+		{% endif %}
 		{% if entry.content_day %}
 			<h3><i>Day:</i></h3>
-			{{ entry.content_day|date_tag_a|squish_ul_linebreaks|safe|linebreaks }}
+			{% if single_entry %}
+				{{ entry.content_day|date_tag_a_entry|squish_ul_linebreaks|safe|linebreaks }}
+			{% else %}
+				{{ entry.content_day|date_tag_a|squish_ul_linebreaks|safe|linebreaks }}
+			{% endif %}
 		{% endif %}
 		{% if entry.content_thought %}
 			<h3><i>Thoughts:</i></h3>
-			{{ entry.content_thought|date_tag_a|squish_ul_linebreaks|safe|linebreaks }}
+			{% if single_entry %}
+				{{ entry.content_thought|date_tag_a_entry|squish_ul_linebreaks|safe|linebreaks }}
+			{% else %}
+				{{ entry.content_thought|date_tag_a|squish_ul_linebreaks|safe|linebreaks }}
+			{% endif %}
 		{% endif %}
 		{% if entry.content_idea %}
 			<h3><i>Ideas:</i></h3>
-			{{ entry.content_idea|date_tag_a|squish_ul_linebreaks|safe|linebreaks }}
+			{% if single_entry %}
+				{{ entry.content_idea|date_tag_a_entry|squish_ul_linebreaks|safe|linebreaks }}
+			{% else %}
+				{{ entry.content_idea|date_tag_a|squish_ul_linebreaks|safe|linebreaks }}
+			{% endif %}
 		{% endif %}
 
 		{% if entry.image_set.exists %}

@@ -87,3 +87,36 @@ def date_tag_a(value):
 	<a href="#...">...</a> date.
 	"""
 	return re.sub("\d{4}-\d{2}-\d{2}", decorate_date, value)
+
+def decorate_date_entry(match):
+	"""
+	Find all dates in format YYYY-MM-DD in match and replace it by clickable
+	<a href="{entry.id}">...</a> date if there is an entry of that day.
+	Otherwise return date with warning saying format is incorect, or that
+	not exactly one entry with given day exists.
+
+	match is a re.Match
+	"""
+	y, m, d = (int(i) for i in match.group().split("-"))
+	try:
+		day = datetime(year=y, month=m, day=d)
+	except ValueError:
+		return f"<i>{match.group()} (incorect date format)</i>"
+	entries = Entry.objects.filter(day=day)
+	if not entries:
+		return f"<i>{weekday(day.weekday())}, {match.group()} (no entry)</i>"
+	elif len(entries) > 1:
+		return f"<i>{match.group()} (huh, found {len(entries)} entries)</i>"
+	else:
+		e = entries.first()
+		return (f'<i><a href="{e.id}">{e.weekday()}, {match.group()}, '
+			f'{e.header if e.header else "(no header)"}</a></i>')
+
+
+@register.filter
+def date_tag_a_entry(value):
+	"""
+	Find all dates in format YYYY-MM-DD in value and replace it by clickable
+	<a href="{e.id}">...</a> date.
+	"""
+	return re.sub("\d{4}-\d{2}-\d{2}", decorate_date_entry, value)
