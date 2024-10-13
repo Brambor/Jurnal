@@ -1,0 +1,11 @@
+{% load static %}
+
+{% include "navbar.html" %}
+
+<link rel="stylesheet" type="text/css" href="{% static 'style.css' %}">
+
+<body>
+	<div class="main-box">
+		<p>Your local IP: {{your_ip}}</p>
+	</div>
+</body>

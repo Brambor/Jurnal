@@ -1,0 +1,10 @@
+<script>
+
+var xhr = new XMLHttpRequest();
+xhr.open("POST", "/all", true);
+xhr.setRequestHeader('Content-Type', 'application/json');
+xhr.send(JSON.stringify({
+    value: 7
+}));
+
+</script>

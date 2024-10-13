@@ -20,19 +20,20 @@ from django.views.generic import RedirectView
 
 import settings
 
-from entries.views import GraphView, greetings, get_all_entries, list_headers, add_read_at, entry, index, sync_request_send, sync_request_recieve, sync_request_complete
+from entries import views
 
 urlpatterns = [
 	url(r'^admin/', admin.site.urls),
-    url(r'^$', index),
-    url(r'^readAt/(?P<pk>[0-9]+)$', add_read_at),
-    url(r'^all$', get_all_entries),
-    url(r'^list$', list_headers),
-    url(r'^entry/(?P<pk>[0-9]+)$', entry),
-    url(r'^sync$', sync_request_send),
-    url(r'^sync_recieve$', sync_request_recieve),
-    url(r'^sync_complete$', sync_request_complete),
-    url(r'^graph$', GraphView.as_view()),
-	url(r'^(?P<year>[0-9]+)/(?P<month>[0-9]+)/(?P<day>[0-9]+)/$', greetings, name='jurnal'),
+    url(r'^$', views.index),
+    url(r'^readAt/(?P<pk>[0-9]+)$', views.add_read_at),
+    url(r'^all$', views.get_all_entries),
+    url(r'^list$', views.list_headers),
+    url(r'^entry/(?P<pk>[0-9]+)$', views.entry),
+    url(r'^sync_page$', views.sync_page),
+    url(r'^sync$', views.sync_request_send),
+    url(r'^sync_recieve$', views.sync_request_recieve),
+    url(r'^sync_complete$', views.sync_request_complete),
+    url(r'^graph$', views.GraphView.as_view()),
+	url(r'^(?P<year>[0-9]+)/(?P<month>[0-9]+)/(?P<day>[0-9]+)/$', views.greetings, name='jurnal'),
 #	url(r'^', greetings),  # this would break media
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

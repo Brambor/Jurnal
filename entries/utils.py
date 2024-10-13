@@ -2,6 +2,7 @@ from plotly.offline import plot
 import plotly.graph_objs as go
 
 from datetime import datetime
+import socket
 
 
 def generate_graph(x, y_data, title, layout_edit={}):
@@ -32,6 +33,14 @@ def generate_graph(x, y_data, title, layout_edit={}):
 
 	return div
 
+def get_client_ip(request):
+	x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+	if x_forwarded_for:
+		ip = x_forwarded_for.split(',')[0]
+	else:
+		ip = request.META.get('REMOTE_ADDR')
+	return ip
+
 weekdays = ("Pondělí", "Úterý", "Středa", "Čtvrtek", "Pátek", "Sobota", "Neděle")
 
 def weekday(n):
@@ -60,3 +69,16 @@ def pass_context_of_entry(entry):
 		"place": e.place,
 		"timesread": e.timesread(),
 	}
+
+def get_ip():
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.settimeout(0)
+    try:
+        # doesn't even have to be reachable
+        s.connect(('10.255.255.255', 1))
+        IP = s.getsockname()[0]
+    except Exception:
+        IP = '127.0.0.1'
+    finally:
+        s.close()
+    return IP
