@@ -146,6 +146,8 @@ class Machine(models.Model):
 	# Then in List of Machines, there can be how many am I ahead (offline)
 	last_sync = models.IntegerField()  # probably
 	# (field for last synced)
+	# BooleanField - allowed to connect to me
+	
 
 
 class IPAddress(models.Model):
