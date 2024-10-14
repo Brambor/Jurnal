@@ -1,4 +1,4 @@
-
+from django.apps import apps
 from django.contrib.admin.models import LogEntry
 from django.core import serializers
 from django.http import HttpResponse, JsonResponse
@@ -7,7 +7,7 @@ from django.template import loader
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic.base import TemplateView
 
-from .forms import ReadAtForm
+from .forms import ReadAtForm, IPForm, ModelNameForm
 from .models import Entry, IPAddress, Machine
 from .utils import generate_graph, get_client_ip, weekday, pass_context_of_entry, get_ip
 
@@ -280,18 +280,61 @@ def sync_request_recieve(request):
 	return JsonResponse(serializers.serialize("json",
 		LogEntry.objects.all().reverse()), safe=False)  # safe=False, so it doesn't have to be a dict
 
-def sync_request_complete(request):
-	# TODO apply changes
-	return HttpResponse()
-
-def sync_page(request):
-	print(get_ip())
-	template = loader.get_template('sync_page.html')
-
+def sync_connect(request):
+	template = loader.get_template('sync_connect.html')
 	# TODO QR code of page to connect to to scan with a phone
-	context = {"your_ip": get_ip()}
-
+	context = {"your_ip": get_ip(), "ip_form": IPForm()}
 	return HttpResponse(template.render(context, request))
+
+def sync_diff(request):
+	""" Make a form generating the new database for a model and my-migration for both databases """
+	# get the other's IP
+
+	# if this is a POST request we need to process the form data
+	if request.method != "POST":
+		raise Exception("need a POST request to acces this page")
+	form = IPForm(request.POST)
+	if not form.is_valid():
+		raise Exception("Form was invalid")
+
+	print(form.cleaned_data["client_ip"])
+	print(request.path)
+	# TODO not localhost, but server IP
+	link = f"http://{request.get_host()}/sync_get_model/person"
+	print("link:", link)
+	f = requests.get(link)
+	print(f.text)
+
+	link = f"http://{form.cleaned_data['client_ip']}/sync_get_model/person"
+	print("link:", link)
+	f = requests.get(link)
+	print(f.text)
+
+
+	#a = me.get_model()
+	#b = other.get_model()
+	# generate html with form for differences
+	# post to process_diff
+	template = loader.get_template('sync_diff.html')
+	context = {}
+	return HttpResponse(template.render(context, request))
+
+def sync_get_model(request, model_name):
+	# return the required model in JSON
+	model = apps.get_model("entries", model_name)
+	data = serializers.serialize("json", model.objects.all())
+	return HttpResponse(json.dumps(data), content_type='application/json')
+
+def sync_process_diff(request):
+	pass
+	# recieve database and my-migrations
+	# send database and my migrations to self
+	# send database and their migrations to them
+
+def sync_recieve_changes(request):
+	pass
+	#it recieves what should be overriten
+
 
 def get_all_entries(request):
 	template = loader.get_template('all_entries.html')

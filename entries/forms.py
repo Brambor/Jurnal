@@ -14,6 +14,14 @@ class ReadAtForm(forms.ModelForm):
         exclude = []
 
 
+class IPForm(forms.Form):
+    client_ip = forms.GenericIPAddressField(protocol="IPv4")
+
+
+class ModelNameForm(forms.Form):
+    model_name = forms.CharField()
+
+
 # https://djangosnippets.org/snippets/2236/
 class ColumnCheckboxSelectMultiple(forms.CheckboxSelectMultiple):
     """

@@ -1,0 +1,16 @@
+{% load static %}
+
+{% include "navbar.html" %}
+
+<link rel="stylesheet" type="text/css" href="{% static 'style.css' %}">
+
+<body>
+	<div class="main-box">
+		<p>This server's local IP: {{your_ip}}</p>
+		<form action="sync_diff" method="post">
+		    {% csrf_token %}
+			{{ip_form}}
+			<input type="submit" value="Submit">
+		</form>
+	</div>
+</body>
