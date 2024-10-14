@@ -13,27 +13,25 @@ Including another URLconf
     1. Import the include() function: from django.conf.urls import url, include
     2. Add a URL to urlpatterns:  url(r'^blog/', include('blog.urls'))
 """
-from django.conf.urls import url
+from django.urls import path
 from django.conf.urls.static import static
 from django.contrib import admin
-from django.views.generic import RedirectView
 
 import settings
 
 from entries import views
 
 urlpatterns = [
-	url(r'^admin/', admin.site.urls),
-    url(r'^$', views.index),
-    url(r'^readAt/(?P<pk>[0-9]+)$', views.add_read_at),
-    url(r'^all$', views.get_all_entries),
-    url(r'^list$', views.list_headers),
-    url(r'^entry/(?P<pk>[0-9]+)$', views.entry),
-    url(r'^sync_page$', views.sync_page),
+	path('admin/', admin.site.urls),
+    path('', views.index),
+    path('readAt/<int:pk>', views.add_read_at),
+    path('all', views.get_all_entries),
+    path('list', views.list_headers),
+    path('entry/<int:pk>', views.entry),
     url(r'^sync$', views.sync_request_send),
     url(r'^sync_recieve$', views.sync_request_recieve),
     url(r'^sync_complete$', views.sync_request_complete),
-    url(r'^graph$', views.GraphView.as_view()),
-	url(r'^(?P<year>[0-9]+)/(?P<month>[0-9]+)/(?P<day>[0-9]+)/$', views.greetings, name='jurnal'),
+    path('graph', views.GraphView.as_view()),
+	path('<int:year>/<int:month>/<int:day>/', views.greetings, name='jurnal'),
 #	url(r'^', greetings),  # this would break media
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
