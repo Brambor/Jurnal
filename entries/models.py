@@ -35,8 +35,6 @@ class Entry(models.Model):
 		apendix = ""
 		if self.header:
 			apendix += f", {self.header}"
-		if not self.complete:
-			apendix += ", unfinished"
 
 		return (
 			f"{prolog}{self.weekday()}, {self.day}, {self.place}{apendix} "
@@ -90,9 +88,6 @@ class Entry(models.Model):
 		max_length=255,
 		default="M",
 	)
-	complete = models.BooleanField(
-		blank=True,
-	)
 	created = models.DateTimeField(
 		auto_now_add=True,
 	)
@@ -131,30 +126,5 @@ class Image(models.Model):
 	image = models.ImageField()
 	entry = models.ForeignKey(
 		Entry,
-		on_delete=models.CASCADE,
-	)
-
-
-class Machine(models.Model):
-	def __str__(self):
-		return self.name
-
-	name = models.CharField(
-		max_length=255,
-	)
-	# my last entry in Log that was synced.
-	# Then in List of Machines, there can be how many am I ahead (offline)
-	last_sync = models.IntegerField()  # probably
-	# (field for last synced)
-	# BooleanField - allowed to connect to me
-	
-
-
-class IPAddress(models.Model):
-	def __str__(self):
-		return f"{self.address} of {self.machine}"
-	address = models.GenericIPAddressField()
-	machine = models.ForeignKey(
-		Machine,
 		on_delete=models.CASCADE,
 	)

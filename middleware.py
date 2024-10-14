@@ -2,7 +2,6 @@ import requests
 from django.http import HttpResponse
 
 from entries.utils import get_client_ip
-from entries.models import IPAddress, Machine
 
 """
 class HostValidationMiddleware(object):
