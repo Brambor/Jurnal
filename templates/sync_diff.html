@@ -4,8 +4,27 @@
 
 <link rel="stylesheet" type="text/css" href="{% static 'style.css' %}">
 
+<style type="text/css">
+    table.diff {font-family:Courier; border:medium;}
+    .diff_header {background-color:#e0e0e0}
+    td.diff_header {text-align:right}
+    .diff_next {background-color:#c0c0c0}
+    .diff_add {background-color:#aaffaa}
+    .diff_chg {background-color:#ffff77}
+    .diff_sub {background-color:#ffaaaa}
+</style>
+
 <body>
 	<div class="main-box">
-		<p>TODO</p>
+		<p>Server IP: {{server_ip}}</p>
+		<p>Client IP: {{client_ip}}</p>
+		{% if not html_diffs %}
+			<p>Models are identical, no diff to produce!</p>
+		{% endif %}
 	</div>
+	{% if html_diffs %}
+		{% for html_diff in html_diffs %}
+			{{html_diff|safe}}
+		{% endfor %}
+	{% endif %}
 </body>

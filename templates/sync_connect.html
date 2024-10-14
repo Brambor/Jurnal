@@ -6,6 +6,7 @@
 
 <body>
 	<div class="main-box">
+		<p>On machines to sync run <code>python manage.py runserver 0.0.0.0:8000</code></p>
 		<p>This server's local IP: {{your_ip}}</p>
 		<form action="sync_diff" method="post">
 		    {% csrf_token %}

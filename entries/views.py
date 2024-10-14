@@ -12,6 +12,7 @@ from .models import Entry, IPAddress, Machine
 from .utils import generate_graph, get_client_ip, weekday, pass_context_of_entry, get_ip
 
 from datetime import datetime, timedelta
+from difflib import HtmlDiff
 import json
 import os
 import requests
@@ -297,26 +298,58 @@ def sync_diff(request):
 	if not form.is_valid():
 		raise Exception("Form was invalid")
 
-	print(form.cleaned_data["client_ip"])
-	print(request.path)
-	# TODO not localhost, but server IP
-	link = f"http://{request.get_host()}/sync_get_model/person"
-	print("link:", link)
-	f = requests.get(link)
-	print(f.text)
+	# GET
+	link = f"http://{request.get_host()}/sync_get_model/{form.cleaned_data['model']}"
+	parsed_server = json.loads(requests.get(link).json())
 
-	link = f"http://{form.cleaned_data['client_ip']}:{form.cleaned_data['port']}/sync_get_model/person"
-	print("link:", link)
-	f = requests.get(link)
-	print(f.text)
+	link = (f"http://{form.cleaned_data['client_ip']}:{form.cleaned_data['port']}/sync_get_model/"
+		f"{form.cleaned_data['model']}")
+	parsed_client = json.loads(requests.get(link).json())
 
+	# DIFF
+	def str_from_parsed_data(parsed, i):
+		return (f"pk: {parsed[i]['pk']}", *(f"{k}: {v}" for k, v in parsed[i]["fields"].items()))
 
-	#a = me.get_model()
-	#b = other.get_model()
-	# generate html with form for differences
-	# post to process_diff
+	def add_diff(a, b):
+		html_diffs.append(Diff.make_table(a, b, fromdesc="Client", todesc="Server"))
+
+	Diff = HtmlDiff(wrapcolumn=form.cleaned_data['diff_wrap'])
+	i_c = 0
+	i_s = 0
+	html_diffs = []
+	while i_c < len(parsed_client) and i_s < len(parsed_server):
+		if parsed_client[i_c] == parsed_server[i_s]:
+			i_c += 1
+			i_s += 1
+		elif parsed_client[i_c]["pk"] == parsed_server[i_s]["pk"]:
+			# there is some difference
+			add_diff(str_from_parsed_data(parsed_client, i_c),
+				     str_from_parsed_data(parsed_server, i_s))
+			i_c += 1
+			i_s += 1
+		elif parsed_client[i_c]["pk"] < parsed_server[i_s]["pk"]:
+			# catchup
+			add_diff(str_from_parsed_data(parsed_client, i_c), "")
+			i_c += 1
+		else: # >
+			# catchup
+			add_diff("", str_from_parsed_data(parsed_server, i_s))
+			i_s += 1
+
+	# catchup
+	while i_c < len(parsed_client):
+		add_diff(str_from_parsed_data(parsed_client, i_c), "")
+		i_c += 1
+	while i_s < len(parsed_server):
+		add_diff("", str_from_parsed_data(parsed_server, i_s))
+		i_s += 1
+
 	template = loader.get_template('sync_diff.html')
-	context = {}
+	context = {
+		"server_ip": request.get_host(),
+		"client_ip": form.cleaned_data['client_ip'],
+		"html_diffs": html_diffs,
+	}
 	return HttpResponse(template.render(context, request))
 
 def sync_get_model(request, model_name):

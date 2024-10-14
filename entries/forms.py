@@ -16,7 +16,10 @@ class ReadAtForm(forms.ModelForm):
 
 class IPForm(forms.Form):
     client_ip = forms.GenericIPAddressField(protocol="IPv4")
-    port = forms.IntegerField()
+    port = forms.IntegerField(initial=8000)
+    model = forms.ChoiceField(widget=forms.Select,
+        choices=tuple((x, x) for x in "Tag Done Entry Person ReadAt Image".split()))
+    diff_wrap = forms.IntegerField(initial=94)
 
 
 class ModelNameForm(forms.Form):
