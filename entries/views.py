@@ -1,22 +1,19 @@
 from django.apps import apps
-from django.contrib.admin.models import LogEntry
 from django.core import serializers
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.template import loader
-from django.views.decorators.csrf import csrf_exempt
 from django.views.generic.base import TemplateView
 
-from .forms import ReadAtForm, IPForm, ModelNameForm
-from .models import Entry, IPAddress, Machine
-from .utils import generate_graph, get_client_ip, weekday, pass_context_of_entry, get_ip
+from .forms import ReadAtForm, IPForm
+from .models import Entry
+from .utils import generate_graph, pass_context_of_entry, get_ip
 
 from datetime import datetime, timedelta
 from difflib import HtmlDiff
 import json
 import os
 import requests
-import subprocess
 
 
 def greetings(request, **kwargs):
@@ -144,142 +141,6 @@ def add_read_at(request, **kwargs):
 	}
 
 	return HttpResponse(template.render(context, request))
-
-
-#TODO delete
-"""
-HOW to connect:
-1) python manage.py runserver 0.0.0.0:8000
-2) go to http://192.168.8.157:8000/sync in browser
-"""
-def sync_request_send(request):
-	# check all machines (TODO: should do that after page load with JavaScript)
-	'''
-	for machine in Machine.objects.all():
-		print(f"Machine: {machine}")
-		for ip in IPAddress.objects.filter(machine=machine):
-
-			"""
-			print(f"ping {ip}")
-			a = ""
-			p = subprocess.Popen(f'ping {ip.address}', capture_output=True)
-			p.wait()
-			# print(p.poll())
-			print(p)
-			# help(p)
-			"""
-			print(f"\tping {ip}")
-			subprocess.Popen(f"ping {ip.address}", stdout=subprocess.PIPE)
-			out = subprocess.run(['ping', ip.address], capture_output=True)
-			print(f"MSG ''{out.stdout.decode()}'")
-			# MACHINE REACHABLE
-
-			# port isn't supposed to be pinged
-			url = f'{ip.address}:8000'
-	'''
-
-	# same git version ??? TODO (compare hashes of last commit)
-	# TODO hardcoded to Jade-AD
-	context = {"data": []}
-	for machine in Machine.objects.all():
-		for ip in IPAddress.objects.filter(machine=machine):
-			print(ip)
-			#url = 'http://192.168.8.184:8000/sync_recieve'  # mobile
-			#url = 'http://192.168.8.157:8000/sync_recieve'  # pc
-			"""
-			for debug:
-			q1 = LogEntry.objects.all().reverse()[:1000]
-			q2 = [] #LogEntry.objects.all().reverse()[1005:1006]
-			serialized_my = serializers.serialize("json", list(chain(q1, q2)))
-			"""
-			url = f'http://{ip.address}:8000/sync_recieve'  # pc
-			serialized_my = serializers.serialize("json", LogEntry.objects.all().reverse())
-
-			try:
-				response = requests.post(url, json=serialized_my)
-			except requests.exceptions.ConnectionError as e:  # Timeout, Unreachable IP etc.
-				context["data"].append({
-					"machine": machine,
-					"matches": "?",
-					"msg": repr(e),
-					"log": ["?"],
-				})
-				continue
-
-			print("RESPONSE:")
-			print("len:", len(response.json()))
-			print("\\RESPONSE")
-			parsed_their = json.loads(response.json())
-			parsed_my = json.loads(serialized_my)
-
-			# DIFF
-
-			changes = {}
-
-			# action_flag: 1=ADDED, 2=CHANGED, 3=DELETED
-			for le in parsed_my:
-				le = le["fields"]
-				le_id = (le["content_type"], le["object_id"])
-				if le_id not in changes:
-					changes[le_id] = []
-				changes[le_id].append(tuple(le[x] for x in (
-					"action_time", "object_repr", "action_flag", "change_message")))
-
-			# LOG
-
-			idx = -1
-			for idx_good, (my, theirs) in enumerate(zip(parsed_my, parsed_their)):
-				if my == theirs:
-					idx = idx_good
-				else:
-					break
-			matches = idx+1
-			ahead = len(parsed_my) - matches
-			behind = len(parsed_their) - matches
-
-			if ahead == 0 == behind:
-				msg = "Everything up to date!"
-			elif ahead > 0 and behind > 0:
-				msg = f"We are behind by {behind} and ahead by {ahead}."
-				# TODO merge possible?
-			elif ahead > 0:
-				msg = f"We are ahead by {ahead}."
-				# TODO send database
-			else: # behind > 0
-				msg = f"We are behind by {behind}."
-				# TODO retrieve their database (not users, just models!)
-			# TODO You, mobile, have to apply these changes
-
-			context["data"].append({
-				"machine": machine,
-				"matches": idx+1,
-				"msg": msg,
-				"log": {
-					"ahead": list(l["fields"] for l in parsed_my[matches:]),
-					"behind": list(l["fields"] for l in parsed_their[matches:]),
-				}
-			})
-
-			# I don't need any more connection per this address
-			# Should optimize this, ask in paralel all of them
-			print("\tsuccess")
-			break
-
-	template = loader.get_template('sync.html')
-	return HttpResponse(template.render(context, request))
-
-	# TODO INACCESIBLE
-	url = 'http://localhost:8000/sync_complete'  # replace with other python app url or ip
-
-#TODO delete
-# Not safe, but I don't know how to get csrf token in sync_request_send, requests.post
-@csrf_exempt
-def sync_request_recieve(request):
-	# if machine is allowed, return
-	# if not allowed, add it's IP to list of IP's
-	print("SYNC connection from:", get_client_ip(request))  # has to be in Middleware
-	return JsonResponse(serializers.serialize("json",
-		LogEntry.objects.all().reverse()), safe=False)  # safe=False, so it doesn't have to be a dict
 
 def sync_connect(request):
 	template = loader.get_template('sync_connect.html')

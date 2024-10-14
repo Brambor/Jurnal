@@ -22,10 +22,6 @@ class IPForm(forms.Form):
     diff_wrap = forms.IntegerField(initial=94)
 
 
-class ModelNameForm(forms.Form):
-    model_name = forms.CharField()
-
-
 # https://djangosnippets.org/snippets/2236/
 class ColumnCheckboxSelectMultiple(forms.CheckboxSelectMultiple):
     """
