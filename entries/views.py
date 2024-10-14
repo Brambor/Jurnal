@@ -145,6 +145,7 @@ def add_read_at(request, **kwargs):
 	return HttpResponse(template.render(context, request))
 
 
+#TODO delete
 """
 HOW to connect:
 1) python manage.py runserver 0.0.0.0:8000
@@ -162,9 +163,9 @@ def sync_request_send(request):
 			a = ""
 			p = subprocess.Popen(f'ping {ip.address}', capture_output=True)
 			p.wait()
-#			print(p.poll())
+			# print(p.poll())
 			print(p)
-#			help(p)
+			# help(p)
 			"""
 			print(f"\tping {ip}")
 			subprocess.Popen(f"ping {ip.address}", stdout=subprocess.PIPE)
@@ -182,8 +183,8 @@ def sync_request_send(request):
 	for machine in Machine.objects.all():
 		for ip in IPAddress.objects.filter(machine=machine):
 			print(ip)
-#			url = 'http://192.168.8.184:8000/sync_recieve'  # mobile
-#			url = 'http://192.168.8.157:8000/sync_recieve'  # pc
+			#url = 'http://192.168.8.184:8000/sync_recieve'  # mobile
+			#url = 'http://192.168.8.157:8000/sync_recieve'  # pc
 			"""
 			for debug:
 			q1 = LogEntry.objects.all().reverse()[:1000]
@@ -269,6 +270,7 @@ def sync_request_send(request):
 	# TODO INACCESIBLE
 	url = 'http://localhost:8000/sync_complete'  # replace with other python app url or ip
 
+#TODO delete
 # Not safe, but I don't know how to get csrf token in sync_request_send, requests.post
 @csrf_exempt
 def sync_request_recieve(request):

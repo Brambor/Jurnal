@@ -28,9 +28,9 @@ urlpatterns = [
     path('all', views.get_all_entries),
     path('list', views.list_headers),
     path('entry/<int:pk>', views.entry),
-    url(r'^sync$', views.sync_request_send),
-    url(r'^sync_recieve$', views.sync_request_recieve),
-    url(r'^sync_complete$', views.sync_request_complete),
+#    url(r'^sync$', views.sync_request_send),
+#    url(r'^sync_recieve$', views.sync_request_recieve),
+#    url(r'^sync_complete$', views.sync_request_complete),
     path('graph', views.GraphView.as_view()),
 	path('<int:year>/<int:month>/<int:day>/', views.greetings, name='jurnal'),
 #	url(r'^', greetings),  # this would break media
