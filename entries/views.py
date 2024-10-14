@@ -22,14 +22,14 @@ def greetings(request, **kwargs):
 	template = loader.get_template('greetings.html')
 
 	hs_arenas_and_decks = [
-		"D:\Hearthstone - arenas and packs\{p}".format(
+		"D:\Pictures\Hearthstone - arenas and packs\{p}".format(
 			p=p
-		) for p in os.listdir("D:\Hearthstone - arenas and packs")
+		) for p in os.listdir("D:\Pictures\Hearthstone - arenas and packs")
 	]
 	hs_other = [
-		"D:\Hearthstone - other\{p}".format(
+		"D:\Pictures\Hearthstone - arenas and packs\{p}".format(
 			p=p
-		) for p in os.listdir("D:\Hearthstone - other")]
+		) for p in os.listdir("D:\Pictures\Hearthstone - arenas and packs")]
 	all_pics = hs_arenas_and_decks + hs_other
 
 	for p in all_pics:
