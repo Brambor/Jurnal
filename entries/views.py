@@ -305,7 +305,7 @@ def sync_diff(request):
 	f = requests.get(link)
 	print(f.text)
 
-	link = f"http://{form.cleaned_data['client_ip']}/sync_get_model/person"
+	link = f"http://{form.cleaned_data['client_ip']}:{form.cleaned_data['port']}/sync_get_model/person"
 	print("link:", link)
 	f = requests.get(link)
 	print(f.text)

@@ -16,6 +16,7 @@ class ReadAtForm(forms.ModelForm):
 
 class IPForm(forms.Form):
     client_ip = forms.GenericIPAddressField(protocol="IPv4")
+    port = forms.IntegerField()
 
 
 class ModelNameForm(forms.Form):
