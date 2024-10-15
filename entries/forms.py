@@ -22,6 +22,12 @@ class IPForm(forms.Form):
     diff_wrap = forms.IntegerField(initial=94)
 
 
+class MergeForm(forms.Form):
+    pk = forms.IntegerField(widget=forms.HiddenInput())
+    merge = forms.ChoiceField(widget=forms.Select,
+        choices=tuple((x, x) for x in "Undecided Client Server Neither Both".split()))
+
+
 # https://djangosnippets.org/snippets/2236/
 class ColumnCheckboxSelectMultiple(forms.CheckboxSelectMultiple):
     """

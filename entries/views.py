@@ -5,7 +5,7 @@ from django.shortcuts import redirect
 from django.template import loader
 from django.views.generic.base import TemplateView
 
-from .forms import ReadAtForm, IPForm
+from .forms import ReadAtForm, IPForm, MergeForm
 from .models import Entry
 from .utils import generate_graph, pass_context_of_entry, get_ip
 
@@ -148,33 +148,15 @@ def sync_connect(request):
 	context = {"your_ip": get_ip(), "ip_form": IPForm()}
 	return HttpResponse(template.render(context, request))
 
-def sync_diff(request):
-	""" Make a form generating the new database for a model and my-migration for both databases """
-	# get the other's IP
-
-	# if this is a POST request we need to process the form data
-	if request.method != "POST":
-		raise Exception("need a POST request to acces this page")
-	form = IPForm(request.POST)
-	if not form.is_valid():
-		raise Exception("Form was invalid")
-
-	# GET
-	link = f"http://{request.get_host()}/sync_get_model/{form.cleaned_data['model']}"
-	parsed_server = json.loads(requests.get(link).json())
-
-	link = (f"http://{form.cleaned_data['client_ip']}:{form.cleaned_data['port']}/sync_get_model/"
-		f"{form.cleaned_data['model']}")
-	parsed_client = json.loads(requests.get(link).json())
-
-	# DIFF
+def generate_html_diff(parsed_client, parsed_server, diff_wrap):
 	def str_from_parsed_data(parsed, i):
 		return (f"pk: {parsed[i]['pk']}", *(f"{k}: {v}" for k, v in parsed[i]["fields"].items()))
 
-	def add_diff(a, b):
-		html_diffs.append(Diff.make_table(a, b, fromdesc="Client", todesc="Server"))
+	def add_diff(a, b, add_pk):
+		html_diffs.append((Diff.make_table(a, b, fromdesc="Client", todesc="Server"),
+			MergeForm(initial={"pk":add_pk})))
 
-	Diff = HtmlDiff(wrapcolumn=form.cleaned_data['diff_wrap'])
+	Diff = HtmlDiff(wrapcolumn=diff_wrap)
 	i_c = 0
 	i_s = 0
 	html_diffs = []
@@ -185,32 +167,58 @@ def sync_diff(request):
 		elif parsed_client[i_c]["pk"] == parsed_server[i_s]["pk"]:
 			# there is some difference
 			add_diff(str_from_parsed_data(parsed_client, i_c),
-				     str_from_parsed_data(parsed_server, i_s))
+				     str_from_parsed_data(parsed_server, i_s),
+				     parsed_client[i_c]["pk"])
 			i_c += 1
 			i_s += 1
 		elif parsed_client[i_c]["pk"] < parsed_server[i_s]["pk"]:
 			# catchup
-			add_diff(str_from_parsed_data(parsed_client, i_c), "")
+			add_diff(str_from_parsed_data(parsed_client, i_c), "", parsed_client[i_c]["pk"])
 			i_c += 1
 		else: # >
 			# catchup
-			add_diff("", str_from_parsed_data(parsed_server, i_s))
+			add_diff("", str_from_parsed_data(parsed_server, i_s), parsed_server[i_s]["pk"])
 			i_s += 1
 
 	# catchup
 	while i_c < len(parsed_client):
-		add_diff(str_from_parsed_data(parsed_client, i_c), "")
+		add_diff(str_from_parsed_data(parsed_client, i_c), "", parsed_client[i_c]["pk"])
 		i_c += 1
 	while i_s < len(parsed_server):
-		add_diff("", str_from_parsed_data(parsed_server, i_s))
+		add_diff("", str_from_parsed_data(parsed_server, i_s), parsed_server[i_s]["pk"])
 		i_s += 1
+	return html_diffs
+
+def sync_diff(request):
+	""" Make a form generating the new database for a model and my-migration for both databases """
+
+	if request.method != "POST":
+		raise Exception("need a POST request to acces this page")
+	form = IPForm(request.POST)
+	if not form.is_valid():
+		raise Exception("Form was not valid")
 
 	template = loader.get_template('sync_diff.html')
 	context = {
 		"server_ip": request.get_host(),
 		"client_ip": form.cleaned_data['client_ip'],
-		"html_diffs": html_diffs,
 	}
+
+	# GET
+	link = f"http://{request.get_host()}/sync_get_model/{form.cleaned_data['model']}"
+	parsed_server = json.loads(requests.get(link).json())
+
+	link = (f"http://{form.cleaned_data['client_ip']}:{form.cleaned_data['port']}/sync_get_model/"
+		f"{form.cleaned_data['model']}")
+	try:
+		parsed_client = json.loads(requests.get(link).json())
+	except json.decoder.JSONDecodeError:
+		context["error"] = f"Couldn't connect to {link}."
+		return HttpResponse(template.render(context, request))
+
+	# DIFF
+	context["html_diffs"] = generate_html_diff(parsed_client, parsed_server, form.cleaned_data['diff_wrap'])
+
 	return HttpResponse(template.render(context, request))
 
 def sync_get_model(request, model_name):

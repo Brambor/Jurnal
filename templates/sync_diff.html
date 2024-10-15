@@ -18,13 +18,21 @@
 	<div class="main-box">
 		<p>Server IP: {{server_ip}}</p>
 		<p>Client IP: {{client_ip}}</p>
-		{% if not html_diffs %}
+		{% if error%}
+			<p>{{error}}</p>
+		{% elif not html_diffs %}
 			<p>Models are identical, no diff to produce!</p>
 		{% endif %}
 	</div>
 	{% if html_diffs %}
-		{% for html_diff in html_diffs %}
-			{{html_diff|safe}}
-		{% endfor %}
+		<form action="sync_process_diff" method="POST">
+			{% csrf_token %}
+			<input type="submit" value="Submit">
+			{% for html_diff, merge_form in html_diffs %}
+				{{html_diff|safe}}
+				↪<!--⤷-->{{merge_form}}
+			{% endfor %}
+			<input type="submit" value="Submit">
+		</form>
 	{% endif %}
 </body>

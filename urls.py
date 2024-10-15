@@ -30,6 +30,7 @@ urlpatterns = [
     path('entry/<int:pk>', views.entry),
     path('sync_connect', views.sync_connect),
     path('sync_diff', views.sync_diff),
+    path('sync_process_diff', views.sync_process_diff),
     path('sync_get_model/<model_name>', views.sync_get_model),
     path('graph', views.GraphView.as_view()),
 	path('<int:year>/<int:month>/<int:day>/', views.greetings, name='jurnal'),
