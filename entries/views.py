@@ -249,7 +249,6 @@ def merge(merge_data, parsed_server, parsed_client, server, client):
 			curr_pk += 1
 			while curr_pk in reserved_pks_orig:
 				curr_pk += 1
-			#return data[-1]["pk"]
 		return inner
 
 	def merge_client(merge_data, merge_i, assign_entry_and_pk, parsed_client):
@@ -321,8 +320,8 @@ def merge(merge_data, parsed_server, parsed_client, server, client):
 
 def replace_with_imported(
 	data_new, pk_mapping, model_Merging,
-	models_FKs, models_FKs_read, models_FKs_write,
-	models_MtoMs, models_MtoMs_read, models_MtoMs_write,
+	models_FKs, models_FKs_read, models_FKs_write, FK_update_fields,
+	models_MtoMs, models_MtoMs_read, models_MtoMs_write, MtoM_update_fields,
 ):
 	# 1. Find the max of current pk MAX_PK_CURRENT.
 	max_pk_current = max(p.pk for p in model_Merging.objects.all())
@@ -344,13 +343,15 @@ def replace_with_imported(
 	call_command("loaddata", "merge_file.json")
 	# 5. A list of ReadAt pk mapping readat_mapping {ReadAt_pk : Person_pk}
 	FK_mappings = []
-	for model_FK, model_FK_read, model_FK_write in zip(models_FKs, models_FKs_read, models_FKs_write):
+	for model_FK, model_FK_read, model_FK_write, fields \
+	in zip(models_FKs, models_FKs_read, models_FKs_write, FK_update_fields):
 		model_mapping = {}
 		# 6. Change the PK of ReadAt from old_PK to MAX_PK.
-		for r in model_FK.objects.all():
+		objs = model_FK.objects.all()
+		for r in objs:
 			model_mapping[r.pk] = model_FK_read(r)
 			model_FK_write(r, max_pk)
-			r.save()
+		model_FK.objects.bulk_update(objs, fields, batch_size=100)
 		FK_mappings.append(model_mapping)
 	# 5. for MtoM
 	MtoM_mappings = []
@@ -371,8 +372,10 @@ def replace_with_imported(
 	#    new_pk = pk_mapping[readat_mapping[ReadAt_pk]] (or something like that).
 	print("pk_mapping:", pk_mapping)
 	print("FK_mappings:", FK_mappings)
-	for model_FK, FK_mapping, model_FK_write in zip(models_FKs, FK_mappings, models_FKs_write):
-		for r in model_FK.objects.all():
+	for model_FK, FK_mapping, model_FK_write, fields \
+	in zip(models_FKs, FK_mappings, models_FKs_write, FK_update_fields):
+		objs = model_FK.objects.all()
+		for r in objs:
 			m_r = FK_mapping[r.pk]
 			if m_r in pk_mapping:
 				m_r = pk_mapping[m_r]
@@ -381,16 +384,19 @@ def replace_with_imported(
 				# delete in the next step
 				continue
 			model_FK_write(r, m_r)
-			r.save()
+		model_FK.objects.bulk_update(objs, fields, batch_size=100)
+
 	# ManyToManyField - update pk by pk_mapping
 	print("MtoM_mappings:", MtoM_mappings)
-	for model_MtoM, MtoM_mapping, model_MtoM_write in zip(models_MtoMs, MtoM_mappings, models_MtoMs_write):
-		for r in model_MtoM.objects.all():
+	for model_MtoM, MtoM_mapping, model_MtoM_write, fields \
+	in zip(models_MtoMs, MtoM_mappings, models_MtoMs_write, MtoM_update_fields):
+		objs = model_MtoM.objects.all()
+		for r in objs:
 			m_r = MtoM_mapping[r.pk]
 			m_r = tuple(pk_mapping[x] if x in pk_mapping else x for x in m_r)
 			print(f"MtoM {r.pk}: {MtoM_mapping[r.pk]} -> {m_r}")
 			model_MtoM_write(r, m_r)
-			r.save()
+		model_MtoM.objects.bulk_update(objs, fields, batch_size=100)
 	# 10. Delete tmp Person, also CASCADE delete ForeginKeys left from the previous step.
 	model_Merging.objects.filter(pk=max_pk).delete()
 
@@ -475,36 +481,36 @@ def sync_update(request):
 		def write_pks(obj, new_pks):
 			obj.tags.set(new_pks)
 		replace_with_imported(new_data, pk_mapping, models.Tag,
-			(), (), (),
-			(models.Entry,), (read_pks,), (write_pks,))
+			(), (), (), (),
+			(models.Entry,), (read_pks,), (write_pks,), (("tags",),))
 	elif model == "Done":
 		def read_pks(obj):
 			return tuple(o.pk for o in obj.done.all())
 		def write_pks(obj, new_pks):
 			obj.done.set(new_pks)
 		replace_with_imported(new_data, pk_mapping, models.Done,
-			(), (), (),
-			(models.Entry,), (read_pks,), (write_pks,))
+			(), (), (), (),
+			(models.Entry,), (read_pks,), (write_pks,), (("done",),))
 	elif model == "Entry":
 		def read_pk(obj):
 			return obj.entry_id
 		def write_pk(obj, new_pk):
 			obj.entry_id = new_pk
 		replace_with_imported(new_data, pk_mapping, models.Entry,
-			(models.ReadAt, models.Image), (read_pk, read_pk), (write_pk, write_pk),
-			(), (), ())
+			(models.ReadAt, models.Image), (read_pk, read_pk), (write_pk, write_pk), (("entry",), ("entry",)),
+			(), (), (), ())
 	elif model == "Person":
 		def read_pk(obj):
 			return obj.read_by_id
 		def write_pk(obj, new_pk):
 			obj.read_by_id = new_pk
 		replace_with_imported(new_data, pk_mapping, models.Person,
-			(models.ReadAt,), (read_pk,), (write_pk,),
-			(), (), ())
+			(models.ReadAt,), (read_pk,), (write_pk,), (("entry",),),
+			(), (), (), ())
 	elif model == "ReadAt":
 		replace_with_imported(new_data, pk_mapping, models.ReadAt,
-			(), (), (),
-			(), (), ())
+			(), (), (), (),
+			(), (), (), ())
 	# TODO sync Image
 	else:
 		return
