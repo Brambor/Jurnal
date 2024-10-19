@@ -349,7 +349,9 @@ def restore_db():
 	call_command("loaddata", "all_data.json")
 
 def replace_with_imported(
-	data_new, pk_mapping, model_Merging, models_FKs, models_FKs_read, models_FKs_set
+	data_new, pk_mapping, model_Merging,
+	models_FKs, models_FKs_read, models_FKs_write,
+	models_MtoMs, models_MtoMs_read, models_MtoMs_write,
 ):
 	# TODO? tmpfile = TemporaryNamedFile(mode="w+", encoding="utf-8")
 	# TODO skip most of it if there are no FKs
@@ -376,14 +378,22 @@ def replace_with_imported(
 	call_command("loaddata", "merge_file.json")
 	# 5. A list of ReadAt pk mapping readat_mapping {ReadAt_pk : Person_pk}
 	FK_mappings = []
-	for model_FK, model_FK_read, model_FK_set in zip(models_FKs, models_FKs_read, models_FKs_set):
+	for model_FK, model_FK_read, model_FK_write in zip(models_FKs, models_FKs_read, models_FKs_write):
 		model_mapping = {}
 		# 6. Change the PK of ReadAt from old_PK to MAX_PK.
 		for r in model_FK.objects.all():
 			model_mapping[r.pk] = model_FK_read(r)
-			model_FK_set(r, max_pk)
+			model_FK_write(r, max_pk)
 			r.save()
 		FK_mappings.append(model_mapping)
+	# 5. for MtoM
+	MtoM_mappings = []
+	for model_MtoM, model_MtoM_read in zip(models_MtoMs, models_MtoMs_read):
+		model_mapping = {}
+		# 6. doesn't apply to MtoMs, just make mapping
+		for r in model_MtoM.objects.all():
+			model_mapping[r.pk] = model_MtoM_read(r)
+		MtoM_mappings.append(model_mapping)
 	# 7. Delete all Person whose PK < MAX_PK, there are no ForeginKeys to them after the previous step.
 	model_Merging.objects.filter(pk__lt=max_pk).delete()
 	# 8. Import new data (there is no overlap between the duplicate and imported data).
@@ -395,7 +405,7 @@ def replace_with_imported(
 	#    new_pk = pk_mapping[readat_mapping[ReadAt_pk]] (or something like that).
 	print("pk_mapping:", pk_mapping)
 	print("FK_mappings:", FK_mappings)
-	for model_FK, FK_mapping, model_FK_set in zip(models_FKs, FK_mappings, models_FKs_set):
+	for model_FK, FK_mapping, model_FK_write in zip(models_FKs, FK_mappings, models_FKs_write):
 		for r in model_FK.objects.all():
 			m_r = FK_mapping[r.pk]
 			if m_r in pk_mapping:
@@ -405,7 +415,17 @@ def replace_with_imported(
 				# deleted instead in the next step
 				#r.delete()
 				continue
-			model_FK_set(r, m_r)
+			model_FK_write(r, m_r)
+			r.save()
+	# ManyToManyField - update pk by pk_mapping
+	print("MtoM_mappings:", MtoM_mappings)
+	for model_MtoM, MtoM_mapping, model_MtoM_write in zip(models_MtoMs, MtoM_mappings, models_MtoMs_write):
+		for r in model_MtoM.objects.all():
+			m_r = MtoM_mapping[r.pk]
+			print(f"before {r.pk} -> {m_r}")
+			m_r = tuple(pk_mapping[x] if x in pk_mapping else x for x in m_r)
+			print(f"after  {r.pk} -> {m_r}")
+			model_MtoM_write(r, m_r)
 			r.save()
 	# 10. Delete tmp Person, there are no ForeginKeys to it after the previous step.
 	# There are relations, but they should be CASCADE deleted
@@ -483,24 +503,54 @@ def sync_update(request):
 	d = json.loads(request.body)
 	model = d["model"]
 	new_data = d["new_data"]
-	pk_mapping = d["pk_mapping"]
+	# somehow key went from int to str in post
+	pk_mapping = dict((int(k), v) for k, v in d["pk_mapping"].items())
 
 	print("model:", model)
 	print("new_data:", new_data)
 	print("pk_mapping:", pk_mapping)
 
-	if model == "Person":
+	if model == "Tag":
+		def read_pks(obj):
+			return tuple(o.pk for o in obj.tags.all())
+		def write_pks(obj, new_pks):
+			obj.tags.set(new_pks)
+		replace_with_imported(new_data, pk_mapping, models.Tag,
+			(), (), (),
+			(models.Entry,), (read_pks,), (write_pks,))
+	elif model == "Done":
+		def read_pks(obj):
+			return tuple(o.pk for o in obj.done.all())
+		def write_pks(obj, new_pks):
+			obj.done.set(new_pks)
+		replace_with_imported(new_data, pk_mapping, models.Done,
+			(), (), (),
+			(models.Entry,), (read_pks,), (write_pks,))
+	elif model == "Entry":
+		def read_pk(obj):
+			return obj.entry_id
+		def write_pk(obj, new_pk):
+			obj.entry_id = new_pk
+		replace_with_imported(new_data, pk_mapping, models.Entry,
+			(models.ReadAt, models.Image), (read_pk, read_pk), (write_pk, write_pk),
+			(), (), ())
+	elif model == "Person":
 		def read_pk(obj):
 			return obj.read_by_id
 		def write_pk(obj, new_pk):
 			obj.read_by_id = new_pk
-		replace_with_imported(new_data, pk_mapping,
-			models.Person, (models.ReadAt,), (read_pk,), (write_pk,))
-		return HttpResponse(status=204)
+		replace_with_imported(new_data, pk_mapping, models.Person,
+			(models.ReadAt,), (read_pk,), (write_pk,),
+			(), (), ())
 	elif model == "ReadAt":
-		replace_with_imported(new_data, pk_mapping,
-			models.ReadAt, (), (), ())
-		return HttpResponse(status=204)
+		replace_with_imported(new_data, pk_mapping, models.ReadAt,
+			(), (), (),
+			(), (), ())
+	# TODO sync Image
+	else:
+		return
+	return HttpResponse(status=204)
+
 
 def get_all_entries(request):
 	template = loader.get_template('all_entries.html')
