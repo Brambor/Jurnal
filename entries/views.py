@@ -497,6 +497,10 @@ def sync_update(request):
 		replace_with_imported(new_data, pk_mapping,
 			models.Person, (models.ReadAt,), (read_pk,), (write_pk,))
 		return HttpResponse(status=204)
+	elif model == "ReadAt":
+		replace_with_imported(new_data, pk_mapping,
+			models.ReadAt, (), (), ())
+		return HttpResponse(status=204)
 
 def get_all_entries(request):
 	template = loader.get_template('all_entries.html')
