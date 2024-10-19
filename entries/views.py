@@ -246,8 +246,6 @@ def merge(merge_data, parsed_server, parsed_client, server, client):
 			data[-1]["pk"] = curr_pk
 			if do_map and original_entry["pk"] != curr_pk:
 				mapping[original_entry["pk"]] = curr_pk
-			if do_map == None:
-				mapping[original_entry["pk"]] = None
 			curr_pk += 1
 			while curr_pk in reserved_pks_orig:
 				curr_pk += 1
@@ -259,59 +257,48 @@ def merge(merge_data, parsed_server, parsed_client, server, client):
 		pk = merge_data[merge_i]["pk"]
 		# do not skip over Client if we have chosen them
 		if m == "Undecided":
-			#print(f"\tMerge Undecided - reserve pk {pk}")
+			# pk already reserved
 			pass
 		elif m == client:
 			r = assign_entry_and_pk(get_entry(parsed_client, pk), False)
-			#print(f"\tMerge {client} {r}")
 			pass
 		elif m == server:
 			raise Exception("This cannot happen")
 		elif m == "Both":
-			#print("\tMerge Both")
-			#print(f"{server} doesn't exist")
+			# both, but server doesn't exist
 			assign_entry_and_pk(get_entry(parsed_client, pk), False)
 		elif m == "Neither":
 			pass
-			#print("\tMerge Neither")
-			#print("noop")
 		else:
 			raise ValueError(f"{m} not in (Undecided, {client}, {server}, Both, Neither)")
 
 	reserved_pks = {m["pk"] for m in merge_data if m["merge"] == "Undecided"}
-	#print("reserved_pks:", " ".join(str(r) for r in reserved_pks))
-	#print("MERGE:", " ".join(f"{m['pk']}-{m['merge']}" for m in merge_data))
 
 	new_ser = []
 	map_pk = {}
 	merge_i = 0
 	assign_entry_and_pk = assing_pk_factory(new_ser, map_pk, reserved_pks)
-	#print("OLD SER")
 	for entry in parsed_server:
-		#print(entry)
 		while merge_i < len(merge_data) and merge_data[merge_i]["pk"] < entry["pk"]:
 			merge_client(merge_data, merge_i, assign_entry_and_pk, parsed_client)
 			merge_i += 1
 		if merge_i >= len(merge_data) or merge_data[merge_i]["pk"] != entry["pk"]:
 			assign_entry_and_pk(entry, True)
 			continue
+
 		assert(merge_i >= len(merge_data) or merge_data[merge_i]["pk"] == entry["pk"])
 		m = merge_data[merge_i]["merge"]
 		# For server:
 		# TODO if BOTH is selected and client doesn't exist, get_entry throws an error
 		# TODO: then don't allow `Server`, `Both`
 		if m == "Undecided":
-			#print("\tUndecided")
 			# not changing the pk
 			new_ser.append(deepcopy(entry))
 		elif m == client:
-			#print(f"\t{client}")
 			assign_entry_and_pk(get_entry(parsed_client, entry["pk"]), True)
 		elif m == server:
-			#print(f"\t{server} (this)")
 			assign_entry_and_pk(entry, True)
 		elif m == "Both":
-			#print("\tBoth")
 			# do it in the same order for the other way around
 			# take the true server side first
 			if server == "Server":
@@ -321,7 +308,6 @@ def merge(merge_data, parsed_server, parsed_client, server, client):
 				assign_entry_and_pk(get_entry(parsed_client, entry["pk"]), False)
 				assign_entry_and_pk(entry, True)
 		elif m == "Neither":
-			#print("\tNeither")
 			map_pk[entry["pk"]] = None
 		else:
 			raise ValueError(f"{m} not in (Undecided, {client}, {server}, Both, Neither)")
@@ -331,31 +317,13 @@ def merge(merge_data, parsed_server, parsed_client, server, client):
 		merge_client(merge_data, merge_i, assign_entry_and_pk, parsed_client)
 		merge_i += 1
 
-	#print("NEW SER")
-	#for entry in new_ser:
-	#	print(entry)
-
-
-	#print("map_pk:", map_pk)
 	return new_ser, map_pk
-
-
-def restore_db():
-	models.Tag.objects.all().delete()
-	models.Done.objects.all().delete()
-	models.Entry.objects.all().delete()
-	models.Person.objects.all().delete()
-	models.ReadAt.objects.all().delete()
-	call_command("loaddata", "all_data.json")
 
 def replace_with_imported(
 	data_new, pk_mapping, model_Merging,
 	models_FKs, models_FKs_read, models_FKs_write,
 	models_MtoMs, models_MtoMs_read, models_MtoMs_write,
 ):
-	# TODO? tmpfile = TemporaryNamedFile(mode="w+", encoding="utf-8")
-	# TODO skip most of it if there are no FKs
-
 	# 1. Find the max of current pk MAX_PK_CURRENT.
 	max_pk_current = max(p.pk for p in model_Merging.objects.all())
 	# 2. Find the max of imported pk MAX_PK_IMPORTED.
@@ -366,14 +334,12 @@ def replace_with_imported(
 		# TODO assuming it exists
 		# get a Person
 		# make JSON
-	data_str = serializers.serialize("json", (model_Merging.objects.first(),))
-	data = json.loads(data_str)
+	data = json.loads(serializers.serialize("json", (model_Merging.objects.first(),)))
 	data[0]["pk"] = max_pk
-	#data[0]["fields"]["display_name"] = "TMP PERSON"
-	data_str = json.dumps(data)
 		# write to a file
+	# TODO? tmpfile = TemporaryNamedFile(mode="w+", encoding="utf-8")
 	with open("merge_file.json", mode="w+", encoding="utf-8") as myfile:
-		myfile.write(data_str)
+		myfile.write(json.dumps(data))
 		# import the file
 	call_command("loaddata", "merge_file.json")
 	# 5. A list of ReadAt pk mapping readat_mapping {ReadAt_pk : Person_pk}
@@ -410,10 +376,9 @@ def replace_with_imported(
 			m_r = FK_mapping[r.pk]
 			if m_r in pk_mapping:
 				m_r = pk_mapping[m_r]
-			print(f"{r.pk} -> {m_r}")
+			print(f"FK {r.pk}: {FK_mapping[r.pk]} -> {m_r}")
 			if m_r == None:
-				# deleted instead in the next step
-				#r.delete()
+				# delete in the next step
 				continue
 			model_FK_write(r, m_r)
 			r.save()
@@ -422,19 +387,14 @@ def replace_with_imported(
 	for model_MtoM, MtoM_mapping, model_MtoM_write in zip(models_MtoMs, MtoM_mappings, models_MtoMs_write):
 		for r in model_MtoM.objects.all():
 			m_r = MtoM_mapping[r.pk]
-			print(f"before {r.pk} -> {m_r}")
 			m_r = tuple(pk_mapping[x] if x in pk_mapping else x for x in m_r)
-			print(f"after  {r.pk} -> {m_r}")
+			print(f"MtoM {r.pk}: {MtoM_mapping[r.pk]} -> {m_r}")
 			model_MtoM_write(r, m_r)
 			r.save()
-	# 10. Delete tmp Person, there are no ForeginKeys to it after the previous step.
-	# There are relations, but they should be CASCADE deleted
+	# 10. Delete tmp Person, also CASCADE delete ForeginKeys left from the previous step.
 	model_Merging.objects.filter(pk=max_pk).delete()
 
 def sync_process_diff(request):
-	# TODO TMP restore database
-	#restore_db()
-
 	# recieve database and my-migrations
 	if request.method != "POST":
 		raise Exception("need a POST request to acces this page")
@@ -507,7 +467,6 @@ def sync_update(request):
 	pk_mapping = dict((int(k), v) for k, v in d["pk_mapping"].items())
 
 	print("model:", model)
-	print("new_data:", new_data)
 	print("pk_mapping:", pk_mapping)
 
 	if model == "Tag":
