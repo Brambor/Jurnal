@@ -1,14 +1,17 @@
 from django.apps import apps
 from django.core import serializers
+from django.core.management import call_command
 from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.template import loader
+from django.views.decorators.csrf import csrf_exempt
 from django.views.generic.base import TemplateView
 
 from .forms import ReadAtForm, IPForm, MergeForm
-from .models import Entry
+from entries import models
 from .utils import generate_graph, pass_context_of_entry, get_ip
 
+from copy import deepcopy
 from datetime import datetime, timedelta
 from difflib import HtmlDiff
 import json
@@ -86,7 +89,7 @@ def greetings(request, **kwargs):
 	if that_date[1]:
 		context["hs_pics"] = that_date[1]
 
-	entries = Entry.objects.filter(day=requested_date)
+	entries = models.Entry.objects.filter(day=requested_date)
 	if len(entries) > 0:
 		context["entry"] = pass_context_of_entry(entries[0])
 
@@ -96,14 +99,14 @@ def index(request):
 	template = loader.get_template('index.html')
 
 	context = {"entry": pass_context_of_entry(
-		Entry.objects.order_by("-day").first())}
+		models.Entry.objects.order_by("-day").first())}
 
 	return HttpResponse(template.render(context, request))
 
 def list_headers(request):
 	template = loader.get_template('list_headers.html')
 
-	context = {"entries": tuple(Entry.objects.order_by("-day"))}
+	context = {"entries": tuple(models.Entry.objects.order_by("-day"))}
 
 	return HttpResponse(template.render(context, request))
 
@@ -111,7 +114,7 @@ def entry(request, **kwargs):
 	template = loader.get_template('single_entry.html')
 
 	context = {"entry": pass_context_of_entry(
-		Entry.objects.get(pk=kwargs.get("pk"))),
+		models.Entry.objects.get(pk=kwargs.get("pk"))),
 		"single_entry": True}
 
 	return HttpResponse(template.render(context, request))
@@ -201,15 +204,15 @@ def sync_diff(request):
 	template = loader.get_template('sync_diff.html')
 	context = {
 		"server_ip": request.get_host(),
-		"client_ip": form.cleaned_data['client_ip'],
+		"client_ip": f"{form.cleaned_data['client_ip']}:{form.cleaned_data['port']}",
+		"model": form.cleaned_data['model'],
 	}
 
 	# GET
-	link = f"http://{request.get_host()}/sync_get_model/{form.cleaned_data['model']}"
+	link = f"http://{context['server_ip']}/sync_get_model/{form.cleaned_data['model']}"
 	parsed_server = json.loads(requests.get(link).json())
 
-	link = (f"http://{form.cleaned_data['client_ip']}:{form.cleaned_data['port']}/sync_get_model/"
-		f"{form.cleaned_data['model']}")
+	link = f"http://{context['client_ip']}/sync_get_model/{form.cleaned_data['model']}"
 	try:
 		parsed_client = json.loads(requests.get(link).json())
 	except json.decoder.JSONDecodeError:
@@ -227,21 +230,278 @@ def sync_get_model(request, model_name):
 	data = serializers.serialize("json", model.objects.all())
 	return HttpResponse(json.dumps(data), content_type='application/json')
 
+def get_entry(parsed, pk):
+	# TODO: they selected client, but it doesn't have this pk
+	for entry in parsed:
+		if entry["pk"] == pk:
+			return entry
+	raise ValueError(f"PK Not Found: {pk}")
+
+def merge(merge_data, parsed_server, parsed_client, server, client):
+	def assing_pk_factory(data, mapping, reserved_pks_orig):
+		curr_pk = 1
+		def inner(original_entry, do_map):
+			nonlocal curr_pk
+			data.append(deepcopy(original_entry))
+			data[-1]["pk"] = curr_pk
+			if do_map and original_entry["pk"] != curr_pk:
+				mapping[original_entry["pk"]] = curr_pk
+			if do_map == None:
+				mapping[original_entry["pk"]] = None
+			curr_pk += 1
+			while curr_pk in reserved_pks_orig:
+				curr_pk += 1
+			#return data[-1]["pk"]
+		return inner
+
+	def merge_client(merge_data, merge_i, assign_entry_and_pk, parsed_client):
+		m = merge_data[merge_i]["merge"]
+		pk = merge_data[merge_i]["pk"]
+		# do not skip over Client if we have chosen them
+		if m == "Undecided":
+			#print(f"\tMerge Undecided - reserve pk {pk}")
+			pass
+		elif m == client:
+			r = assign_entry_and_pk(get_entry(parsed_client, pk), False)
+			#print(f"\tMerge {client} {r}")
+			pass
+		elif m == server:
+			raise Exception("This cannot happen")
+		elif m == "Both":
+			#print("\tMerge Both")
+			#print(f"{server} doesn't exist")
+			assign_entry_and_pk(get_entry(parsed_client, pk), False)
+		elif m == "Neither":
+			pass
+			#print("\tMerge Neither")
+			#print("noop")
+		else:
+			raise ValueError(f"{m} not in (Undecided, {client}, {server}, Both, Neither)")
+
+	reserved_pks = {m["pk"] for m in merge_data if m["merge"] == "Undecided"}
+	#print("reserved_pks:", " ".join(str(r) for r in reserved_pks))
+	#print("MERGE:", " ".join(f"{m['pk']}-{m['merge']}" for m in merge_data))
+
+	new_ser = []
+	map_pk = {}
+	merge_i = 0
+	assign_entry_and_pk = assing_pk_factory(new_ser, map_pk, reserved_pks)
+	#print("OLD SER")
+	for entry in parsed_server:
+		#print(entry)
+		while merge_i < len(merge_data) and merge_data[merge_i]["pk"] < entry["pk"]:
+			merge_client(merge_data, merge_i, assign_entry_and_pk, parsed_client)
+			merge_i += 1
+		if merge_i >= len(merge_data) or merge_data[merge_i]["pk"] != entry["pk"]:
+			assign_entry_and_pk(entry, True)
+			continue
+		assert(merge_i >= len(merge_data) or merge_data[merge_i]["pk"] == entry["pk"])
+		m = merge_data[merge_i]["merge"]
+		# For server:
+		# TODO if BOTH is selected and client doesn't exist, get_entry throws an error
+		# TODO: then don't allow `Server`, `Both`
+		if m == "Undecided":
+			#print("\tUndecided")
+			# not changing the pk
+			new_ser.append(deepcopy(entry))
+		elif m == client:
+			#print(f"\t{client}")
+			assign_entry_and_pk(get_entry(parsed_client, entry["pk"]), True)
+		elif m == server:
+			#print(f"\t{server} (this)")
+			assign_entry_and_pk(entry, True)
+		elif m == "Both":
+			#print("\tBoth")
+			# do it in the same order for the other way around
+			# take the true server side first
+			if server == "Server":
+				assign_entry_and_pk(entry, True)
+				assign_entry_and_pk(get_entry(parsed_client, entry["pk"]), False)
+			else:
+				assign_entry_and_pk(get_entry(parsed_client, entry["pk"]), False)
+				assign_entry_and_pk(entry, True)
+		elif m == "Neither":
+			#print("\tNeither")
+			map_pk[entry["pk"]] = None
+		else:
+			raise ValueError(f"{m} not in (Undecided, {client}, {server}, Both, Neither)")
+		merge_i += 1
+
+	while merge_i < len(merge_data):
+		merge_client(merge_data, merge_i, assign_entry_and_pk, parsed_client)
+		merge_i += 1
+
+	#print("NEW SER")
+	#for entry in new_ser:
+	#	print(entry)
+
+
+	#print("map_pk:", map_pk)
+	return new_ser, map_pk
+
+
+def restore_db():
+	models.Tag.objects.all().delete()
+	models.Done.objects.all().delete()
+	models.Entry.objects.all().delete()
+	models.Person.objects.all().delete()
+	models.ReadAt.objects.all().delete()
+	call_command("loaddata", "all_data.json")
+
+def replace_with_imported(
+	data_new, pk_mapping, model_Merging, models_FKs, models_FKs_read, models_FKs_set
+):
+	# TODO? tmpfile = TemporaryNamedFile(mode="w+", encoding="utf-8")
+	# TODO skip most of it if there are no FKs
+
+	# 1. Find the max of current pk MAX_PK_CURRENT.
+	max_pk_current = max(p.pk for p in model_Merging.objects.all())
+	# 2. Find the max of imported pk MAX_PK_IMPORTED.
+	max_pk_imported = max(d["pk"] for d in data_new)
+	# 3. MAX_PK = max(MAX_PK_CURRENT, MAX_PK_IPORTED)
+	max_pk = max(max_pk_current, max_pk_imported) + 1
+	# 4. Make a tmp Person with PK=MAX_PK
+		# TODO assuming it exists
+		# get a Person
+		# make JSON
+	data_str = serializers.serialize("json", (model_Merging.objects.first(),))
+	data = json.loads(data_str)
+	data[0]["pk"] = max_pk
+	#data[0]["fields"]["display_name"] = "TMP PERSON"
+	data_str = json.dumps(data)
+		# write to a file
+	with open("merge_file.json", mode="w+", encoding="utf-8") as myfile:
+		myfile.write(data_str)
+		# import the file
+	call_command("loaddata", "merge_file.json")
+	# 5. A list of ReadAt pk mapping readat_mapping {ReadAt_pk : Person_pk}
+	FK_mappings = []
+	for model_FK, model_FK_read, model_FK_set in zip(models_FKs, models_FKs_read, models_FKs_set):
+		model_mapping = {}
+		# 6. Change the PK of ReadAt from old_PK to MAX_PK.
+		for r in model_FK.objects.all():
+			model_mapping[r.pk] = model_FK_read(r)
+			model_FK_set(r, max_pk)
+			r.save()
+		FK_mappings.append(model_mapping)
+	# 7. Delete all Person whose PK < MAX_PK, there are no ForeginKeys to them after the previous step.
+	model_Merging.objects.filter(pk__lt=max_pk).delete()
+	# 8. Import new data (there is no overlap between the duplicate and imported data).
+	with open("merge_file.json", mode="w+", encoding="utf-8") as myfile:
+		myfile.write(json.dumps(data_new))
+		# import the file
+	call_command("loaddata", "merge_file.json")
+	# 9. Change the PK of ReadAt from MAX_PK to pk provided by mapping.
+	#    new_pk = pk_mapping[readat_mapping[ReadAt_pk]] (or something like that).
+	print("pk_mapping:", pk_mapping)
+	print("FK_mappings:", FK_mappings)
+	for model_FK, FK_mapping, model_FK_set in zip(models_FKs, FK_mappings, models_FKs_set):
+		for r in model_FK.objects.all():
+			m_r = FK_mapping[r.pk]
+			if m_r in pk_mapping:
+				m_r = pk_mapping[m_r]
+			print(f"{r.pk} -> {m_r}")
+			if m_r == None:
+				# deleted instead in the next step
+				#r.delete()
+				continue
+			model_FK_set(r, m_r)
+			r.save()
+	# 10. Delete tmp Person, there are no ForeginKeys to it after the previous step.
+	# There are relations, but they should be CASCADE deleted
+	model_Merging.objects.filter(pk=max_pk).delete()
+
 def sync_process_diff(request):
-	pass
+	# TODO TMP restore database
+	#restore_db()
+
 	# recieve database and my-migrations
-	# send database and my migrations to self
-	# send database and their migrations to them
+	if request.method != "POST":
+		raise Exception("need a POST request to acces this page")
+	merge_data = []
+	for pk, merge_action in zip(request.POST.getlist("pk"), request.POST.getlist("merge")):
+		form = MergeForm({"pk":int(pk),"merge":merge_action})
+		if not form.is_valid():
+			raise Exception("Form was not valid")
+		merge_data.append(form.cleaned_data)
 
-def sync_recieve_changes(request):
-	pass
-	#it recieves what should be overriten
+	# GET
+	link = f"http://{request.POST['server_ip']}/sync_get_model/{request.POST['model']}"
+	parsed_server = json.loads(requests.get(link).json())
 
+	link = f"http://{request.POST['client_ip']}/sync_get_model/{request.POST['model']}"
+	try:
+		parsed_client = json.loads(requests.get(link).json())
+	except json.decoder.JSONDecodeError:
+		context["error"] = f"Couldn't connect to {link}."
+		return HttpResponse(template.render(context, request))
+
+	data_new_server, mapping_server = merge(merge_data, parsed_server, parsed_client, "Server", "Client")
+	data_new_client, mapping_client = merge(merge_data, parsed_client, parsed_server, "Client", "Server")
+
+	# UPDATE SERVER
+	link = f"http://{request.POST['server_ip']}/sync_update"
+	post_data = {
+		"model":request.POST['model'],
+		"new_data":data_new_server,
+		"pk_mapping": mapping_server,
+	}
+	post_response = requests.post(link, json=post_data)
+	if not post_response.ok:
+		print("post_response:", post_response)
+		#print("post_response.text:", post_response.text)
+		raise Exception(f"Response was not OK from {link}")
+
+	# UPDATE CLIENT
+	link = f"http://{request.POST['client_ip']}/sync_update"
+	post_data = {
+		"model":request.POST['model'],
+		"new_data":data_new_client,
+		"pk_mapping": mapping_client,
+	}
+	post_response = requests.post(link, json=post_data)
+	if not post_response.ok:
+		print("post_response:", post_response)
+		#print("post_response.text:", post_response.text)
+		raise Exception(f"Response was not OK from {link}")
+
+	template = loader.get_template('sync_diff_check.html')
+	context = {
+		"data_new_server": data_new_server,
+		"data_new_client": data_new_client,
+		"mapping_server": mapping_server,
+		"mapping_client": mapping_client,
+	}
+
+	return HttpResponse(template.render(context, request))
+
+@csrf_exempt
+def sync_update(request):
+	if request.method != "POST":
+		raise Exception("need a POST request to acces this page")
+
+	d = json.loads(request.body)
+	model = d["model"]
+	new_data = d["new_data"]
+	pk_mapping = d["pk_mapping"]
+
+	print("model:", model)
+	print("new_data:", new_data)
+	print("pk_mapping:", pk_mapping)
+
+	if model == "Person":
+		def read_pk(obj):
+			return obj.read_by_id
+		def write_pk(obj, new_pk):
+			obj.read_by_id = new_pk
+		replace_with_imported(new_data, pk_mapping,
+			models.Person, (models.ReadAt,), (read_pk,), (write_pk,))
+		return HttpResponse(status=204)
 
 def get_all_entries(request):
 	template = loader.get_template('all_entries.html')
 
-	context = {"entries": (pass_context_of_entry(e) for e in Entry.objects.order_by("-day"))}
+	context = {"entries": (pass_context_of_entry(e) for e in models.Entry.objects.order_by("-day"))}
 
 	return HttpResponse(template.render(context, request))
 
@@ -252,7 +512,7 @@ class GraphView(TemplateView):
 	def get_context_data(self, **kwargs):
 		context = super(GraphView, self).get_context_data(**kwargs)
 
-		entries = Entry.objects.order_by('day')
+		entries = models.Entry.objects.order_by('day')
 
 		x = [e.day for e in entries]
 

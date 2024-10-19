@@ -32,6 +32,7 @@ urlpatterns = [
     path('sync_diff', views.sync_diff),
     path('sync_process_diff', views.sync_process_diff),
     path('sync_get_model/<model_name>', views.sync_get_model),
+    path('sync_update', views.sync_update),
     path('graph', views.GraphView.as_view()),
 	path('<int:year>/<int:month>/<int:day>/', views.greetings, name='jurnal'),
 #	url(r'^', greetings),  # this would break media
