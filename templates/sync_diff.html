@@ -14,6 +14,17 @@
     .diff_sub {background-color:#ffaaaa}
 </style>
 
+<script>
+function set_selected() {
+	value = document.getElementById("merge_change_all").value;
+	for (var e of document.getElementsByTagName("option")) {
+		if (e.value == value) {
+			e.selected = "select"
+		}
+	}
+}
+</script>
+
 <body>
 	<div class="main-box">
 		<p>Server IP: {{server_ip}}</p>
@@ -22,6 +33,15 @@
 			<p>{{error}}</p>
 		{% elif not html_diffs %}
 			<p>Models are identical, no diff to produce for {{model}}!</p>
+		{% else %}
+			<label for="merge_change_all">Change all Merge:</label>
+			<select id="merge_change_all" onchange="set_selected()">
+				<option value="Undecided">Undecided</option>
+				<option value="Client">Client</option>
+				<option value="Server">Server</option>
+				<option value="Neither">Neither</option>
+				<option value="Both">Both</option>
+			</select>
 		{% endif %}
 	</div>
 	{% if html_diffs %}
