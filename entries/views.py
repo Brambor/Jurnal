@@ -156,14 +156,19 @@ def generate_html_diff(parsed_client, parsed_server, diff_wrap):
 		tag_dict = {}
 		for tag in models.Tag.objects.all():
 			tag_dict[tag.pk] = tag.tag
+		done_dict = {}
+		for done in models.Done.objects.all():
+			done_dict[done.pk] = done.done
 
 	def strs_from_parsed_data(parsed, i):
-		# assuming Tag objs were already merged
+		# assuming Tag and Done objs were already merged
 		ret = [f"pk: {parsed[i]['pk']}"]
 		for k, v in parsed[i]["fields"].items():
-			# Expand Tag objects to be strings rather than pks
+			# Expand Tag and Done objects to be strings rather than pks
 			if parsed[i]["model"] == "entries.entry" and k == "tags":
 				ret.append(f"{k}: {', '.join(tag_dict[tag_pk] for tag_pk in v)}")
+			elif parsed[i]["model"] == "entries.entry" and k == "done":
+				ret.append(f"{k}: {', '.join(done_dict[done_pk] for done_pk in v)}")
 			else:
 				ret.append(f"{k}: {v}")
 		return ret
