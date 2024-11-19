@@ -22,6 +22,10 @@ class Done(models.Model):
 	)
 
 
+class Image(models.Model):
+	image = models.ImageField()
+
+
 class Entry(models.Model):
 	class Meta:
 		verbose_name_plural = "Entries"
@@ -88,6 +92,11 @@ class Entry(models.Model):
 		max_length=255,
 		default="M",
 	)
+	images = models.ManyToManyField(
+		Image,
+		related_name='entries',
+		blank=True,
+	)
 	created = models.DateTimeField(
 		auto_now_add=True,
 	)
@@ -118,13 +127,5 @@ class ReadAt(models.Model):
 	)
 	read_by = models.ForeignKey(
 		Person,
-		on_delete=models.CASCADE,
-	)
-
-
-class Image(models.Model):
-	image = models.ImageField()
-	entry = models.ForeignKey(
-		Entry,
 		on_delete=models.CASCADE,
 	)

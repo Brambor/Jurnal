@@ -18,7 +18,7 @@ class IPForm(forms.Form):
     client_ip = forms.GenericIPAddressField(protocol="IPv4")
     port = forms.IntegerField(initial=8000)
     model = forms.ChoiceField(widget=forms.Select,
-        choices=tuple((x, x) for x in "Tag Done Entry Person ReadAt Image".split()))
+        choices=tuple((x, x) for x in "Tag Done Image Entry Person ReadAt".split()))
     diff_wrap = forms.IntegerField(initial=94)
 
 

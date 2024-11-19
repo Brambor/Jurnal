@@ -58,7 +58,7 @@ def pass_context_of_entry(entry):
 		"weekday_date": f"{e.weekday()}, {e.day}",
 		"header": e.header,
 		"to_do": e.to_do.replace("\n", "; "),
-		"image_set": e.image_set.all(),
+		"image_set": e.images.all(),
 		"content": e.content,
 		"content_day": e.content_day,
 		"content_thought": e.content_thought,

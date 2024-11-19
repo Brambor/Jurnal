@@ -7,11 +7,6 @@ from .forms import ColumnCheckboxSelectMultiple
 from .models import Done, Entry, Image, Person, ReadAt, Tag
 
 
-class ImagesInLine(admin.TabularInline):
-	model = Image
-	extra = 0
-
-
 class EntryAdmin(admin.ModelAdmin):
 	model = Entry
 	ordering = ('-day',)
@@ -21,7 +16,6 @@ class EntryAdmin(admin.ModelAdmin):
 #		ChoiceField : {"widget": RadioSelect},
 	}
 #	choice111 = ChoiceField(widget = RadioSelect, choices = (("T", "T"), ("M", "M")))
-	inlines = [ImagesInLine]
 
 
 class ImageAdmin(admin.ModelAdmin):
