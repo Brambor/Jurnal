@@ -152,8 +152,21 @@ def sync_connect(request):
 	return HttpResponse(template.render(context, request))
 
 def generate_html_diff(parsed_client, parsed_server, diff_wrap):
-	def str_from_parsed_data(parsed, i):
-		return (f"pk: {parsed[i]['pk']}", *(f"{k}: {v}" for k, v in parsed[i]["fields"].items()))
+	if parsed_client[0]["model"] == "entries.entry":
+		tag_dict = {}
+		for tag in models.Tag.objects.all():
+			tag_dict[tag.pk] = tag.tag
+
+	def strs_from_parsed_data(parsed, i):
+		# assuming Tag objs were already merged
+		ret = [f"pk: {parsed[i]['pk']}"]
+		for k, v in parsed[i]["fields"].items():
+			# Expand Tag objects to be strings rather than pks
+			if parsed[i]["model"] == "entries.entry" and k == "tags":
+				ret.append(f"{k}: {', '.join(tag_dict[tag_pk] for tag_pk in v)}")
+			else:
+				ret.append(f"{k}: {v}")
+		return ret
 
 	def add_diff(a, b, add_pk):
 		html_diffs.append((Diff.make_table(a, b, fromdesc="Client", todesc="Server"),
@@ -169,26 +182,26 @@ def generate_html_diff(parsed_client, parsed_server, diff_wrap):
 			i_s += 1
 		elif parsed_client[i_c]["pk"] == parsed_server[i_s]["pk"]:
 			# there is some difference
-			add_diff(str_from_parsed_data(parsed_client, i_c),
-				     str_from_parsed_data(parsed_server, i_s),
+			add_diff(strs_from_parsed_data(parsed_client, i_c),
+				     strs_from_parsed_data(parsed_server, i_s),
 				     parsed_client[i_c]["pk"])
 			i_c += 1
 			i_s += 1
 		elif parsed_client[i_c]["pk"] < parsed_server[i_s]["pk"]:
 			# catchup
-			add_diff(str_from_parsed_data(parsed_client, i_c), "", parsed_client[i_c]["pk"])
+			add_diff(strs_from_parsed_data(parsed_client, i_c), "", parsed_client[i_c]["pk"])
 			i_c += 1
 		else: # >
 			# catchup
-			add_diff("", str_from_parsed_data(parsed_server, i_s), parsed_server[i_s]["pk"])
+			add_diff("", strs_from_parsed_data(parsed_server, i_s), parsed_server[i_s]["pk"])
 			i_s += 1
 
 	# catchup
 	while i_c < len(parsed_client):
-		add_diff(str_from_parsed_data(parsed_client, i_c), "", parsed_client[i_c]["pk"])
+		add_diff(strs_from_parsed_data(parsed_client, i_c), "", parsed_client[i_c]["pk"])
 		i_c += 1
 	while i_s < len(parsed_server):
-		add_diff("", str_from_parsed_data(parsed_server, i_s), parsed_server[i_s]["pk"])
+		add_diff("", strs_from_parsed_data(parsed_server, i_s), parsed_server[i_s]["pk"])
 		i_s += 1
 	return html_diffs
 
