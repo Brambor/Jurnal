@@ -1,5 +1,6 @@
-Django < 4
+Django > 5, < 6
 plotly
 beautifulsoup4
 Pillow
 requests
+tzdata
