@@ -23,8 +23,13 @@ class Done(models.Model):
 
 
 class Image(models.Model):
-	image = models.ImageField()
+	def __str__(self):
+		return self.name
 
+	image = models.ImageField()
+	name = models.CharField(
+		max_length=100,
+	)
 
 class Entry(models.Model):
 	class Meta:
