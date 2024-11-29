@@ -106,7 +106,10 @@ def index(request):
 def list_headers(request):
 	template = loader.get_template('list_headers.html')
 
-	context = {"entries": tuple(models.Entry.objects.order_by("-day"))}
+	context = {
+		"entries": tuple(models.Entry.objects.order_by("-day")),
+		"last_read": models.ReadAt.objects.order_by("-date")[0].entry.pk,
+	}
 
 	return HttpResponse(template.render(context, request))
 
@@ -538,7 +541,11 @@ def sync_update(request):
 def get_all_entries(request):
 	template = loader.get_template('all_entries.html')
 
-	context = {"entries": (pass_context_of_entry(e) for e in models.Entry.objects.order_by("-day"))}
+	#todo crash if ReadAt is empty
+	context = {
+		"entries": (pass_context_of_entry(e) for e in models.Entry.objects.order_by("-day")),
+		"last_read": models.ReadAt.objects.order_by("-date")[0].entry.pk,
+	}
 
 	return HttpResponse(template.render(context, request))
 
