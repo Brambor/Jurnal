@@ -371,14 +371,15 @@ def replace_with_imported(
 		# TODO assuming it exists
 		# get a Person
 		# make JSON
-	data = json.loads(serializers.serialize("json", (model_Merging.objects.first(),)))
-	data[0]["pk"] = max_pk
-		# write to a file
-	# TODO? tmpfile = TemporaryNamedFile(mode="w+", encoding="utf-8")
-	with open("merge_file.json", mode="w+", encoding="utf-8") as myfile:
-		myfile.write(json.dumps(data))
-		# import the file
-	call_command("loaddata", "merge_file.json")
+	if model_Merging.objects.first():
+		data = json.loads(serializers.serialize("json", (model_Merging.objects.first(),)))
+		data[0]["pk"] = max_pk
+			# write to a file
+		# TODO? tmpfile = TemporaryNamedFile(mode="w+", encoding="utf-8")
+		with open("merge_file.json", mode="w+", encoding="utf-8") as myfile:
+			myfile.write(json.dumps(data))
+			# import the file
+		call_command("loaddata", "merge_file.json")
 	# 5. A list of ReadAt pk mapping readat_mapping {ReadAt_pk : Person_pk}
 	FK_mappings = []
 	for model_FK, model_FK_read, model_FK_write, fields \
