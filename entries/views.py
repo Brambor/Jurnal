@@ -493,7 +493,9 @@ def sync_process_diff(request):
 	post_response = requests.post(link, json=post_data)
 	if not post_response.ok:
 		print("post_response:", post_response)
-		#print("post_response.text:", post_response.text)
+		print("post_response.text is in `some file.html`")
+		with open("some file.html", "w", encoding="utf-8") as f:
+			f.write(post_response.text)
 		raise Exception(f"Response was not OK from {link}")
 
 	template = loader.get_template('sync_diff_check.html')
