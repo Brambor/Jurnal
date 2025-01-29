@@ -390,7 +390,8 @@ def replace_with_imported(
 		for r in objs:
 			model_mapping[r.pk] = model_FK_read(r)
 			model_FK_write(r, max_pk)
-		model_FK.objects.bulk_update(objs, fields, batch_size=100)
+			r.save()
+		#model_FK.objects.bulk_update(objs, fields, batch_size=100)
 		FK_mappings.append(model_mapping)
 	# 5. for MtoM
 	MtoM_mappings = []
@@ -424,7 +425,8 @@ def replace_with_imported(
 				# delete in the next step
 				continue
 			model_FK_write(r, m_r)
-		model_FK.objects.bulk_update(objs, fields, batch_size=100)
+			r.save()
+		#model_FK.objects.bulk_update(objs, fields, batch_size=100)
 
 	# ManyToManyField - update pk by pk_mapping
 	print("MtoM_mappings:", MtoM_mappings)
