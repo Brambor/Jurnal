@@ -1,4 +1,5 @@
 from django.apps import apps
+from django.conf import settings
 from django.core import serializers
 from django.core.management import call_command
 from django.http import HttpResponse
@@ -522,6 +523,22 @@ def sync_update(request):
 	print("model:", model)
 	print("pk_mapping:", pk_mapping)
 
+	# Backup
+	with open(settings.PATH_DATABASE, "rb") as f:
+		data = f.read()
+	os.makedirs(settings.DIR_DATABASE_BACKUP, exist_ok=True)
+	# delete all backups but the newest NUM_BACKUPS (-(-1) since a new one will be created)
+	for fn in sorted(os.listdir(settings.DIR_DATABASE_BACKUP))[:-settings.NUM_BACKUPS+1]:
+		filename = os.path.join(settings.DIR_DATABASE_BACKUP, fn)
+		print("deleting backup:", filename)
+		os.remove(filename)
+	# create new backup
+	backup_path = f'db_backup_{datetime.now().strftime("%Y-%m-%d__%H-%M-%S")}.sqlite3'
+	print(f"creating backup: {backup_path}")
+	with open(os.path.join(settings.DIR_DATABASE_BACKUP, backup_path), "wb") as f:
+		f.write(data)
+
+	# Sync the models, replace_with_imported will alter the database
 	if model == "Tag":
 		def read_pks(obj):
 			return tuple(o.pk for o in obj.tags.all())

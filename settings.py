@@ -13,8 +13,12 @@ https://docs.djangoproject.com/en/1.11/ref/settings/
 import os
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-BASE_DIR_J = os.path.dirname(os.path.abspath(__file__))
-BASE_DIR = os.path.dirname(BASE_DIR_J)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+PATH_DATABASE = os.path.join(BASE_DIR, 'db.sqlite3')
+# Save a copy of the entire database here before every sync.
+DIR_DATABASE_BACKUP = os.path.join(BASE_DIR, 'db_backup')
+# Number of backups. If there are more, the oldest (sorted by file name) is deleted.
+NUM_BACKUPS = 10
 
 
 # Quick-start development settings - unsuitable for production
@@ -85,7 +89,7 @@ WSGI_APPLICATION = 'wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR_J, 'db.sqlite3'),
+        'NAME': PATH_DATABASE,
     }
 }
 
@@ -130,9 +134,9 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR_J, "static"),
+    os.path.join(BASE_DIR, "static"),
 ]
 
-MEDIA_ROOT = os.path.join(BASE_DIR_J, 'media')
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 MEDIA_URL = '/media/'

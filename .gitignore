@@ -2,3 +2,4 @@ vien/*
 *.pyc
 db.sqlite3
 media/*
+db_backup/*
