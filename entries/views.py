@@ -538,13 +538,22 @@ def sync_update(request):
 		replace_with_imported(new_data, pk_mapping, models.Done,
 			(), (), (), (),
 			(models.Entry,), (read_pks,), (write_pks,), (("done",),))
+	# TODO sync Image file objects, this just does the annotations etc.
+	elif model == "Image":
+		def read_pks(obj):
+			return tuple(o.pk for o in obj.images.all())
+		def write_pks(obj, new_pks):
+			obj.images.set(new_pks)
+		replace_with_imported(new_data, pk_mapping, models.Image,
+			(), (), (), (),
+			(models.Entry,), (read_pks,), (write_pks,), (("images",),))
 	elif model == "Entry":
 		def read_pk(obj):
 			return obj.entry_id
 		def write_pk(obj, new_pk):
 			obj.entry_id = new_pk
 		replace_with_imported(new_data, pk_mapping, models.Entry,
-			(models.ReadAt, models.Image), (read_pk, read_pk), (write_pk, write_pk), (("entry",), ("entry",)),
+			(models.ReadAt,), (read_pk,), (write_pk,), (("entry",),),
 			(), (), (), ())
 	elif model == "Person":
 		def read_pk(obj):
@@ -558,7 +567,6 @@ def sync_update(request):
 		replace_with_imported(new_data, pk_mapping, models.ReadAt,
 			(), (), (), (),
 			(), (), (), ())
-	# TODO sync Image
 	else:
 		return
 	return HttpResponse(status=204)
