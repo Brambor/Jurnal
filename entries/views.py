@@ -98,17 +98,18 @@ def greetings(request, **kwargs):
 def index(request):
 	template = loader.get_template('index.html')
 
-	context = {"entry": pass_context_of_entry(
-		models.Entry.objects.order_by("-day").first())}
+	e = models.Entry.objects.order_by("-day").first()
+	context = {"entry": pass_context_of_entry(e) if e else e}
 
 	return HttpResponse(template.render(context, request))
 
 def list_headers(request):
 	template = loader.get_template('list_headers.html')
 
+	l = models.ReadAt.objects.order_by("-date").first()
 	context = {
 		"entries": tuple(models.Entry.objects.order_by("-day")),
-		"last_read": models.ReadAt.objects.order_by("-date")[0].entry.pk,
+		"last_read": l.entry.pk if l else l,
 	}
 
 	return HttpResponse(template.render(context, request))
@@ -155,7 +156,8 @@ def sync_connect(request):
 	return HttpResponse(template.render(context, request))
 
 def generate_html_diff(parsed_client, parsed_server, diff_wrap):
-	if parsed_client[0]["model"] == "entries.entry":
+	if parsed_client and parsed_client[0]["model"] == "entries.entry" \
+		or parsed_server and parsed_server[0]["model"] == "entries.entry":
 		tag_dict = {}
 		for tag in models.Tag.objects.all():
 			tag_dict[tag.pk] = tag.tag
@@ -541,10 +543,10 @@ def sync_update(request):
 def get_all_entries(request):
 	template = loader.get_template('all_entries.html')
 
-	#todo crash if ReadAt is empty
+	l = models.ReadAt.objects.order_by("-date").first()
 	context = {
-		"entries": (pass_context_of_entry(e) for e in models.Entry.objects.order_by("-day")),
-		"last_read": models.ReadAt.objects.order_by("-date")[0].entry.pk,
+		"entries": tuple(pass_context_of_entry(e) for e in models.Entry.objects.order_by("-day")),
+		"last_read": l.entry.pk if l else l,
 	}
 
 	return HttpResponse(template.render(context, request))

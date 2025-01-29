@@ -6,13 +6,17 @@
 
 <body>
 	<div class="main-box">
-		last_read: "{{last_read}} clickable link"
-		<h2>List of all headers</h2>
-		{% for entry in entries %}
-			{% if entry.pk == last_read %}
-				<p>>>>>LAST READvvvv<<<<</p>
-			{% endif %}
-			<p><a href="entry/{{entry.pk}}">{{ entry }}</a></p>
-		{% endfor %}
+		{% if entries %}
+			last_read: "{{last_read}} clickable link"
+			<h2>List of all headers</h2>
+			{% for entry in entries %}
+				{% if entry.pk == last_read %}
+					<p>>>>>LAST READvvvv<<<<</p>
+				{% endif %}
+				<p><a href="entry/{{entry.pk}}">{{ entry }}</a></p>
+			{% endfor %}
+		{% else %}
+			<h2>There are no entries, yet</h2>
+		{% endif %}
 	</div>
 </body>

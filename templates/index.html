@@ -4,7 +4,11 @@
 
 <body>
 	<div class="main-box">
-		<h2>Last entry:</h2>
-		{% include "entry.html" %}
+		{% if entry %}
+			<h2>Last entry:</h2>
+			{% include "entry.html" %}
+		{% else %}
+			<h2>There are no entries, yet</h2>
+		{% endif %}
 	</div>
 </body>

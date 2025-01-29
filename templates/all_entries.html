@@ -6,11 +6,15 @@
 
 <body>
 	<div class="main-box">
-		{% for entry in entries %}
-			{% if entry.pk == last_read %}
-				<p>>>>>LAST READvvvv<<<<</p>
-			{% endif %}
-			{% include "entry.html" %}
-		{% endfor %}
+		{% if entries %}
+			{% for entry in entries %}
+				{% if entry.pk == last_read %}
+					<p>>>>>LAST READvvvv<<<<</p>
+				{% endif %}
+				{% include "entry.html" %}
+			{% endfor %}
+		{% else %}
+			<h2>There are no entries, yet</h2>
+		{% endif %}
 	</div>
 </body>
