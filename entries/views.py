@@ -437,7 +437,13 @@ def replace_with_imported(
 			m_r = tuple(pk_mapping[x] if x in pk_mapping else x for x in m_r)
 			print(f"MtoM {r.pk}: {MtoM_mapping[r.pk]} -> {m_r}")
 			model_MtoM_write(r, m_r)
-		model_MtoM.objects.bulk_update(objs, fields, batch_size=100)
+		try:
+			model_MtoM.objects.bulk_update(objs, fields, batch_size=100)
+		except ValueError as e:
+			print("bulk_update didn't work, saving individualy:")
+			print(e)
+			for r in objs:
+				r.save()
 	# 10. Delete tmp Person, also CASCADE delete ForeginKeys left from the previous step.
 	model_Merging.objects.filter(pk=max_pk).delete()
 
