@@ -282,10 +282,10 @@ def merge(merge_data, parsed_server, parsed_client, server, client):
 			# pk already reserved
 			pass
 		elif m == client:
-			r = assign_entry_and_pk(get_entry(parsed_client, pk), False)
-			pass
+			assign_entry_and_pk(get_entry(parsed_client, pk), False)
 		elif m == server:
-			raise Exception("This cannot happen")
+			# Do not copy client data (delete them)
+			pass
 		elif m == "Both":
 			# both, but server doesn't exist
 			assign_entry_and_pk(get_entry(parsed_client, pk), False)
@@ -294,16 +294,33 @@ def merge(merge_data, parsed_server, parsed_client, server, client):
 		else:
 			raise ValueError(f"{m} not in (Undecided, {client}, {server}, Both, Neither)")
 
+	def try_get_assign_entry_factory(assign_entry_and_pk, parsed_client):
+		def try_get_assign_entry(pk, do_map):
+			"""
+			Assign entry from client, if it exists.
+			For case when client doesn't exist but client or both were selected.
+			"""
+			try:
+				entry = get_entry(parsed_client, pk)
+			except ValueError as e:
+				return
+			assign_entry_and_pk(entry, do_map)
+		return try_get_assign_entry
+
+
 	reserved_pks = {m["pk"] for m in merge_data if m["merge"] == "Undecided"}
 
 	new_ser = []
 	map_pk = {}
 	merge_i = 0
 	assign_entry_and_pk = assing_pk_factory(new_ser, map_pk, reserved_pks)
+	try_get_assign_entry = try_get_assign_entry_factory(assign_entry_and_pk, parsed_client)
 	for entry in parsed_server:
+		# Add data from client:
 		while merge_i < len(merge_data) and merge_data[merge_i]["pk"] < entry["pk"]:
 			merge_client(merge_data, merge_i, assign_entry_and_pk, parsed_client)
 			merge_i += 1
+		# Keep data unafected by migration:
 		if merge_i >= len(merge_data) or merge_data[merge_i]["pk"] != entry["pk"]:
 			assign_entry_and_pk(entry, True)
 			continue
@@ -311,13 +328,11 @@ def merge(merge_data, parsed_server, parsed_client, server, client):
 		assert(merge_i >= len(merge_data) or merge_data[merge_i]["pk"] == entry["pk"])
 		m = merge_data[merge_i]["merge"]
 		# For server:
-		# TODO if BOTH is selected and client doesn't exist, get_entry throws an error
-		# TODO: then don't allow `Server`, `Both`
 		if m == "Undecided":
 			# not changing the pk
 			new_ser.append(deepcopy(entry))
 		elif m == client:
-			assign_entry_and_pk(get_entry(parsed_client, entry["pk"]), True)
+			try_get_assign_entry(entry["pk"], True)
 		elif m == server:
 			assign_entry_and_pk(entry, True)
 		elif m == "Both":
@@ -325,9 +340,9 @@ def merge(merge_data, parsed_server, parsed_client, server, client):
 			# take the true server side first
 			if server == "Server":
 				assign_entry_and_pk(entry, True)
-				assign_entry_and_pk(get_entry(parsed_client, entry["pk"]), False)
+				try_get_assign_entry(entry["pk"], False)
 			else:
-				assign_entry_and_pk(get_entry(parsed_client, entry["pk"]), False)
+				try_get_assign_entry(entry["pk"], False)
 				assign_entry_and_pk(entry, True)
 		elif m == "Neither":
 			map_pk[entry["pk"]] = None
