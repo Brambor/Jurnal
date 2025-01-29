@@ -347,9 +347,9 @@ def replace_with_imported(
 	models_MtoMs, models_MtoMs_read, models_MtoMs_write, MtoM_update_fields,
 ):
 	# 1. Find the max of current pk MAX_PK_CURRENT.
-	max_pk_current = max(p.pk for p in model_Merging.objects.all())
+	max_pk_current = max(p.pk for p in model_Merging.objects.all()) if model_Merging.objects.first() else 0
 	# 2. Find the max of imported pk MAX_PK_IMPORTED.
-	max_pk_imported = max(d["pk"] for d in data_new)
+	max_pk_imported = max(d["pk"] for d in data_new) if data_new else 0
 	# 3. MAX_PK = max(MAX_PK_CURRENT, MAX_PK_IPORTED)
 	max_pk = max(max_pk_current, max_pk_imported) + 1
 	# 4. Make a tmp Person with PK=MAX_PK
@@ -458,7 +458,9 @@ def sync_process_diff(request):
 	post_response = requests.post(link, json=post_data)
 	if not post_response.ok:
 		print("post_response:", post_response)
-		#print("post_response.text:", post_response.text)
+		print("post_response.text is in `some file.html`")
+		with open("some file.html", "w", encoding="utf-8") as f:
+			f.write(post_response.text)
 		raise Exception(f"Response was not OK from {link}")
 
 	# UPDATE CLIENT
