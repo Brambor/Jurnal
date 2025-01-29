@@ -403,10 +403,11 @@ def replace_with_imported(
 	# 7. Delete all Person whose PK < MAX_PK, there are no ForeginKeys to them after the previous step.
 	model_Merging.objects.filter(pk__lt=max_pk).delete()
 	# 8. Import new data (there is no overlap between the duplicate and imported data).
-	with open("merge_file.json", mode="w+", encoding="utf-8") as myfile:
-		myfile.write(json.dumps(data_new))
-		# import the file
-	call_command("loaddata", "merge_file.json")
+	if data_new:
+		with open("merge_file.json", mode="w+", encoding="utf-8") as myfile:
+			myfile.write(json.dumps(data_new))
+			# import the file
+		call_command("loaddata", "merge_file.json")
 	# 9. Change the PK of ReadAt from MAX_PK to pk provided by mapping.
 	#    new_pk = pk_mapping[readat_mapping[ReadAt_pk]] (or something like that).
 	print("pk_mapping:", pk_mapping)
