@@ -110,7 +110,8 @@ def list_headers(request):
 	l = models.ReadAt.objects.order_by("-date").first()
 	context = {
 		"entries": tuple(models.Entry.objects.order_by("-day")),
-		"last_read": l.entry.pk if l else l,
+		#"last_read": l.entry.day.strftime("%Y-%m-%d") if l else l
+		"last_read": l.entry if l else l,
 	}
 
 	return HttpResponse(template.render(context, request))
