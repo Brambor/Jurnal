@@ -7,6 +7,8 @@
 <body>
 	<div class="main-box">
 		last_read: <a href=/entry/{{last_read.pk}}>{{last_read}}</a>
+		<br></br>
+		next up: <a href=/entry/{{next_entry.pk}}>{{next_entry}}</a>
 		<h2>List of all headers</h2>
 		{% for entry in entries %}
 			{% if entry.pk == last_read %}

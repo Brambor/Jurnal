@@ -108,10 +108,16 @@ def list_headers(request):
 	template = loader.get_template('list_headers.html')
 
 	l = models.ReadAt.objects.order_by("-date").first()
+	if l:
+		d = l.entry.day + timedelta(days=1)
+		next_entry = models.Entry.objects.filter(day__gte=d).order_by("day").first()
+	else:
+		next_entry = None
 	context = {
 		"entries": tuple(models.Entry.objects.order_by("-day")),
 		#"last_read": l.entry.day.strftime("%Y-%m-%d") if l else l
 		"last_read": l.entry if l else l,
+		"next_entry": next_entry,
 	}
 
 	return HttpResponse(template.render(context, request))
