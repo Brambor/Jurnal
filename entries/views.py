@@ -364,6 +364,16 @@ def merge(merge_data, parsed_server, parsed_client, server, client):
 
 	return new_ser, map_pk
 
+def update_model(model, objs, fields, msg_on_fail):
+	try:
+		model.objects.bulk_update(objs, fields, batch_size=100)
+	except ValueError as e:
+		print(e)
+		print(f"bulk_update didn't work in {msg_on_fail}, saving individualy:")
+		for i, r in enumerate(objs):
+			print(i, end=", ", flush=True)
+			r.save()
+
 def replace_with_imported(
 	data_new, pk_mapping, model_Merging,
 	models_FKs, models_FKs_read, models_FKs_write, FK_update_fields,
@@ -398,7 +408,7 @@ def replace_with_imported(
 		for r in objs:
 			model_mapping[r.pk] = model_FK_read(r)
 			model_FK_write(r, max_pk)
-		model_FK.objects.bulk_update(objs, fields, batch_size=100)
+		update_model(model_FK, objs, fields, "Step 6")
 		FK_mappings.append(model_mapping)
 	# 5. for MtoM
 	MtoM_mappings = []
@@ -432,7 +442,7 @@ def replace_with_imported(
 				# delete in the next step
 				continue
 			model_FK_write(r, m_r)
-		model_FK.objects.bulk_update(objs, fields, batch_size=100)
+		update_model(model_FK, objs, fields, "Step 9")
 
 	# ManyToManyField - update pk by pk_mapping
 	print("MtoM_mappings:", MtoM_mappings)
@@ -444,13 +454,7 @@ def replace_with_imported(
 			m_r = tuple(pk_mapping[x] if x in pk_mapping else x for x in m_r)
 			print(f"MtoM {r.pk}: {MtoM_mapping[r.pk]} -> {m_r}")
 			model_MtoM_write(r, m_r)
-		try:
-			model_MtoM.objects.bulk_update(objs, fields, batch_size=100)
-		except ValueError as e:
-			print("bulk_update didn't work, saving individualy:")
-			print(e)
-			for r in objs:
-				r.save()
+		update_model(model_MtoM, objs, fields, "Step 10")
 	# 10. Delete tmp Person, also CASCADE delete ForeginKeys left from the previous step.
 	model_Merging.objects.filter(pk=max_pk).delete()
 
