@@ -47,10 +47,19 @@ class Entry(models.Model):
 
 		return (
 			f"{prolog}{self.weekday()}, {self.day}, {self.place}{apendix} "
-			f"({self.get_len_in_char()} chars)")
+			f"({self.get_len_in_char()})")
 
 	def get_len_in_char(self):
-		return len(self.content)+len(self.content_day)+len(self.content_thought)+len(self.content_idea)
+		"""
+		Example output: 12 345 678 chars
+		"""
+		l = str(len(self.content)+len(self.content_day)+len(self.content_thought)+len(self.content_idea))
+		r = ""
+		for i, ch in enumerate(l):
+			r += ch
+			if (len(l) - i) % 3 == 1:
+				r += " "
+		return f"{r} chars"
 
 	def weekday(self):
 		return weekday(self.day.weekday())
