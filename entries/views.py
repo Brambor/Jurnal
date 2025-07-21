@@ -8,8 +8,8 @@ from django.template import loader
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic.base import TemplateView
 
-from .forms import ReadAtForm, IPForm, MergeForm
 from entries import models
+from . import forms
 from .utils import generate_graph, pass_context_of_entry, get_ip
 
 from copy import deepcopy
@@ -136,7 +136,7 @@ def add_read_at(request, **kwargs):
 	read_at = None
 	if request.method == 'POST':
 		# create a form instance and populate it with data from the request:
-		form = ReadAtForm(request.POST)
+		form = forms.ReadAtForm(request.POST)
 		# check whether it's valid:
 		if form.is_valid():
 			# process the data in form.cleaned_data as required
@@ -145,7 +145,7 @@ def add_read_at(request, **kwargs):
 
 	# if a GET (or any other method), create a prepopulated form
 	else:
-		form = ReadAtForm(initial={"entry": kwargs.get("pk")})
+		form = forms.ReadAtForm(initial={"entry": kwargs.get("pk")})
 
 	template = loader.get_template('add_ReadAt.html')
 
@@ -160,7 +160,7 @@ def add_read_at(request, **kwargs):
 def sync_connect(request):
 	template = loader.get_template('sync_connect.html')
 	# TODO QR code of page to connect to to scan with a phone
-	context = {"your_ip": get_ip(), "ip_form": IPForm()}
+	context = {"your_ip": get_ip(), "ip_form": forms.IPForm()}
 	return HttpResponse(template.render(context, request))
 
 def generate_html_diff(parsed_client, parsed_server, diff_wrap):
@@ -188,7 +188,7 @@ def generate_html_diff(parsed_client, parsed_server, diff_wrap):
 
 	def add_diff(a, b, add_pk):
 		html_diffs.append((Diff.make_table(a, b, fromdesc="Client", todesc="Server"),
-			MergeForm(initial={"pk":add_pk})))
+			forms.MergeForm(initial={"pk":add_pk})))
 
 	Diff = HtmlDiff(wrapcolumn=diff_wrap)
 	i_c = 0
@@ -228,7 +228,7 @@ def sync_diff(request):
 
 	if request.method != "POST":
 		raise Exception("need a POST request to acces this page")
-	form = IPForm(request.POST)
+	form = forms.IPForm(request.POST)
 	if not form.is_valid():
 		raise Exception("Form was not valid")
 
@@ -464,7 +464,7 @@ def sync_process_diff(request):
 		raise Exception("need a POST request to acces this page")
 	merge_data = []
 	for pk, merge_action in zip(request.POST.getlist("pk"), request.POST.getlist("merge")):
-		form = MergeForm({"pk":int(pk),"merge":merge_action})
+		form = forms.MergeForm({"pk":int(pk),"merge":merge_action})
 		if not form.is_valid():
 			raise Exception("Form was not valid")
 		merge_data.append(form.cleaned_data)
