@@ -592,7 +592,7 @@ def sync_update(request):
 		def write_pk(obj, new_pk):
 			obj.read_by_id = new_pk
 		replace_with_imported(new_data, pk_mapping, models.Person,
-			(models.ReadAt,), (read_pk,), (write_pk,), (("entry",),),
+			(models.ReadAt,), (read_pk,), (write_pk,), (("read_by",),),
 			(), (), (), ())
 	elif model == "ReadAt":
 		replace_with_imported(new_data, pk_mapping, models.ReadAt,
