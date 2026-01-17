@@ -14,6 +14,14 @@ class ReadAtForm(forms.ModelForm):
         exclude = []
 
 
+class ChangePksForm(forms.Form):
+    model = forms.ChoiceField(widget=forms.Select,
+        choices=tuple((x, x) for x in "Tag Done Image Entry Person ReadAt".split()))
+    from_pk = forms.IntegerField()
+    to_pk = forms.IntegerField()
+    diff = forms.IntegerField()
+
+
 class IPForm(forms.Form):
     client_ip = forms.GenericIPAddressField(protocol="IPv4")
     port = forms.IntegerField(initial=8000)

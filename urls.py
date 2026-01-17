@@ -28,6 +28,8 @@ urlpatterns = [
     path('all', views.get_all_entries),
     path('list', views.list_headers),
     path('entry/<int:pk>', views.entry),
+    path('change_pks', views.change_pks),
+    path('change_pks_diff', views.change_pks_diff),
     path('sync_connect', views.sync_connect),
     path('sync_diff', views.sync_diff),
     path('sync_process_diff', views.sync_process_diff),

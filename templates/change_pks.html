@@ -1,0 +1,19 @@
+{% load static %}
+
+{% include "navbar.html" %}
+
+<link rel="stylesheet" type="text/css" href="{% static 'style.css' %}">
+
+<body>
+	<div class="main-box">
+		{% if success %}
+			<p>Success!</p>
+		{% endif %}
+		<form action="change_pks_diff" method="post">
+			<p>from_pk and to_pk are inclusive</p>
+		    {% csrf_token %}
+			{{ change_pks_form }}
+			<input type="submit" value="Submit">
+		</form>
+	</div>
+</body>

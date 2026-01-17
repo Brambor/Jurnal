@@ -157,6 +157,60 @@ def add_read_at(request, **kwargs):
 
 	return HttpResponse(template.render(context, request))
 
+def change_pks(request):
+	template = loader.get_template('change_pks.html')
+	context = {"change_pks_form": forms.ChangePksForm()}
+	return HttpResponse(template.render(context, request))
+
+def change_pks_diff(request):
+	if request.method != "POST":
+		raise Exception("need a POST request to acces this page")
+	form = forms.ChangePksForm(request.POST)
+	if not form.is_valid():
+		raise Exception("Form was not valid")
+	model_name = form.cleaned_data['model']
+	from_pk = form.cleaned_data['from_pk']
+	to_pk = form.cleaned_data['to_pk']
+	diff = form.cleaned_data['diff']
+	# from_pk + diff < 0 doesn't matter, negative pks are valid
+
+	model = apps.get_model("entries", model_name)
+	data = json.loads(serializers.serialize("json", model.objects.all()))
+
+	all_pks = set(d["pk"] for d in data)
+	pk_mapping = {}
+	used = set()
+	# Strategy:
+	# 1. reserve PKs I want to transfer to
+	for pk in range(from_pk, to_pk+1):
+		if pk not in all_pks:
+			continue
+		pk_mapping[pk] = pk + diff
+		used.add(pk + diff)
+	# 2. get PK_MAX that will not be needed, and any pk bigger than it will not be needed either
+	max_all = max(all_pks) if all_pks else 0
+	max_used = max(used) if used else 0
+	PK_MAX = max(max_all, max_used) + 1
+	# 3. For each object, that has pk in reserved_range and pk not in change_from:
+	#       change object.pk to PK_MAX; PK_MAX += 1
+	for pk in all_pks:
+		if pk in pk_mapping:
+			continue
+		if pk in used:
+			pk_mapping[pk] = PK_MAX
+			PK_MAX += 1
+		else:
+			pk_mapping[pk] = pk
+
+	for d in data:
+		d["pk"] = pk_mapping[d["pk"]]
+
+	sync_update_model(data, pk_mapping, model_name)
+
+	template = loader.get_template('change_pks.html')
+	context = {"change_pks_form": forms.ChangePksForm(), "success": True}
+	return HttpResponse(template.render(context, request))
+
 def sync_connect(request):
 	template = loader.get_template('sync_connect.html')
 	# TODO QR code of page to connect to to scan with a phone
@@ -551,7 +605,9 @@ def sync_update(request):
 	print(f"creating backup: {backup_path}")
 	with open(os.path.join(settings.DIR_DATABASE_BACKUP, backup_path), "wb") as f:
 		f.write(data)
+	return sync_update_model(new_data, pk_mapping, model)
 
+def sync_update_model(new_data, pk_mapping, model):
 	# Sync the models, replace_with_imported will alter the database
 	if model == "Tag":
 		def read_pks(obj):
