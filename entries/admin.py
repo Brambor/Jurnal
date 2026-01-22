@@ -7,11 +7,16 @@ from .forms import ColumnCheckboxSelectMultiple
 from .models import Done, Entry, Image, Person, ReadAt, Tag
 
 
+class ResizableTextarea(Textarea):
+	class Media:
+		js = ["textarea_resize.js"]
+
+
 class EntryAdmin(admin.ModelAdmin):
 	model = Entry
 	ordering = ('-day',)
 	formfield_overrides = {
-		models.TextField : {"widget": Textarea(attrs={"rows": 1, "cols": 120})},
+		models.TextField : {"widget": ResizableTextarea(attrs={"rows": 1, "cols": 120})},
 		models.ManyToManyField : {"widget": ColumnCheckboxSelectMultiple(columns=3)},
 #		ChoiceField : {"widget": RadioSelect},
 	}
